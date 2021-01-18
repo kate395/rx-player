@@ -83,8 +83,11 @@ class VideoThumbnail extends React.Component {
               !this.videoThumbnailLoader ||
               this.videoThumbnailLoader._videoElement !== el
             )) {
+          const fakePlayer = {
+            getManifest: () => this.props.manifest,
+          };
           this.videoThumbnailLoader =
-            new VideoThumbnailLoader(el, this.props.manifest);
+            new VideoThumbnailLoader(el, fakePlayer);
           this.videoThumbnailLoader.addFetcher(DASH_FETCHER);
         }
       } }></video>
