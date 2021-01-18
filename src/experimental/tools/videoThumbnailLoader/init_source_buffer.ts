@@ -29,7 +29,7 @@ import {
 } from "rxjs/operators";
 import createSegmentLoader from "../../../core/fetchers/segment/create_segment_loader";
 import { AudioVideoSegmentBuffer } from "../../../core/segment_buffers/implementations";
-import dash from "../../../transports/dash";
+import { ITransportAudioVideoSegmentPipeline } from "../../../transports";
 import prepareSourceBuffer from "./prepare_source_buffer";
 import { IContentInfos } from "./types";
 
@@ -37,15 +37,6 @@ const _currentVideoSourceBuffers: WeakMap<HTMLMediaElement,
                                           AudioVideoSegmentBuffer> = new WeakMap();
 const _currentContentInfos: WeakMap<HTMLMediaElement,
                                     IContentInfos> = new WeakMap();
-
-const { loader, parser } = dash({ lowLatencyMode: false }).video;
-const segmentLoader = createSegmentLoader(
-  loader,
-  undefined,
-  { baseDelay: 0,
-    maxDelay: 0,
-    maxRetryRegular: 0,
-    maxRetryOffline: 0 });
 
 /**
  * Get current source buffer :
@@ -56,8 +47,17 @@ const segmentLoader = createSegmentLoader(
  * @returns {Observable}
  */
 export function initSourceBuffer$(contentInfos: IContentInfos,
-                                  element: HTMLVideoElement
+                                  element: HTMLVideoElement,
+                                  { loader, parser }: ITransportAudioVideoSegmentPipeline
 ): Observable<AudioVideoSegmentBuffer> {
+  const segmentLoader = createSegmentLoader(
+    loader,
+    undefined,
+    { baseDelay: 0,
+      maxDelay: 0,
+      maxRetryRegular: 0,
+      maxRetryOffline: 0 });
+
   let _sourceBufferObservable$: Observable<AudioVideoSegmentBuffer>;
   const currentVideoSourceBuffer = _currentVideoSourceBuffers.get(element);
   const currentContentInfos = _currentContentInfos.get(element);

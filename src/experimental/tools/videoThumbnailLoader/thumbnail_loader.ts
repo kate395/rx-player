@@ -181,7 +181,8 @@ export default class VideoThumbnailLoader {
     const jobPromise = observableRace(
       abortError$,
       initSourceBuffer$(contentInfos,
-                        this._videoElement).pipe(
+                        this._videoElement,
+                        { loader, parser }).pipe(
         mergeMap((videoSourceBuffer) => {
           const bufferCleaning$ =
             removeBufferAroundTime$(this._videoElement, videoSourceBuffer, time);
