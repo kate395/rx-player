@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import createMetaplaylist from "./createMetaplaylist";
-import mediaCapabilitiesProber from "./mediaCapabilitiesProber";
-import parseBifThumbnails from "./parseBIFThumbnails";
-import VideoThumbnailLoader from "./videoThumbnailLoader";
+import dash from "../../../../transports/dash";
+import { IFetchers } from "../types";
 
-export {
-  createMetaplaylist,
-  mediaCapabilitiesProber,
-  parseBifThumbnails,
-  VideoThumbnailLoader,
-};
+export default function addDashFeature(fetchers: IFetchers): void {
+  const transports = dash({ lowLatencyMode: false });
+  fetchers.dash = transports;
+}

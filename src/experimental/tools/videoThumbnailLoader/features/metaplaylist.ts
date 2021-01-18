@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import createMetaplaylist from "./createMetaplaylist";
-import mediaCapabilitiesProber from "./mediaCapabilitiesProber";
-import parseBifThumbnails from "./parseBIFThumbnails";
-import VideoThumbnailLoader from "./videoThumbnailLoader";
+import mpl from "../../../../transports/metaplaylist";
+import { IFetchers } from "../types";
 
-export {
-  createMetaplaylist,
-  mediaCapabilitiesProber,
-  parseBifThumbnails,
-  VideoThumbnailLoader,
-};
+export default function addMplFeature(fetchers: IFetchers): void {
+  const transports = mpl({ lowLatencyMode: false });
+  fetchers.metaplaylist = transports;
+}

@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import createMetaplaylist from "./createMetaplaylist";
-import mediaCapabilitiesProber from "./mediaCapabilitiesProber";
-import parseBifThumbnails from "./parseBIFThumbnails";
-import VideoThumbnailLoader from "./videoThumbnailLoader";
+import smooth from "../../../../transports/smooth";
+import { IFetchers } from "../types";
 
-export {
-  createMetaplaylist,
-  mediaCapabilitiesProber,
-  parseBifThumbnails,
-  VideoThumbnailLoader,
-};
+export default function addSmoothFeature(fetchers: IFetchers): void {
+  const transports = smooth({ lowLatencyMode: false });
+  fetchers.smooth = transports;
+}

@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2015 CANAL+ Group
  *
@@ -14,14 +15,16 @@
  * limitations under the License.
  */
 
-import createMetaplaylist from "./createMetaplaylist";
-import mediaCapabilitiesProber from "./mediaCapabilitiesProber";
-import parseBifThumbnails from "./parseBIFThumbnails";
-import VideoThumbnailLoader from "./videoThumbnailLoader";
+import Manifest, {
+  Adaptation,
+  Period,
+  Representation,
+} from "../../../manifest";
+import { ITransportPipelines } from "../../../transports";
 
-export {
-  createMetaplaylist,
-  mediaCapabilitiesProber,
-  parseBifThumbnails,
-  VideoThumbnailLoader,
-};
+export interface IContentInfos { manifest: Manifest;
+                                 period: Period;
+                                 adaptation: Adaptation;
+                                 representation: Representation; }
+
+export type IFetchers = Partial<Record<string, ITransportPipelines>>;
