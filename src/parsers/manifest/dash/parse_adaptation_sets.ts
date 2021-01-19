@@ -331,12 +331,14 @@ export default function parseAdaptationSets(
     const trickModeAttachedAdaptationIds: string[]|undefined =
       trickModeProperty?.value?.split(" ");
 
+    const isTrickModeTrack = trickModeAttachedAdaptationIds !== undefined;
+
     if (type === "video" &&
         isMainAdaptation &&
         parsedAdaptations.video !== undefined &&
         parsedAdaptations.video.length > 0 &&
         lastMainAdaptationIndex.video !== undefined &&
-        trickModeAttachedAdaptationIds === undefined)
+        !isTrickModeTrack)
     {
       // Add to the already existing main video adaptation
       // TODO remove that ugly custom logic?
@@ -372,7 +374,6 @@ export default function parseAdaptationSets(
                                 hasSignLanguageInterpretation(accessibility) ? true :
                                                                                undefined;
 
-      const isTrickModeTrack = trickModeAttachedAdaptationIds !== undefined;
       const representations = parseRepresentations(representationsIR,
                                                    adaptation,
                                                    adaptationInfos);
@@ -397,7 +398,7 @@ export default function parseAdaptationSets(
         .unsafelyBaseOnPreviousPeriod?.getAdaptation(adaptationID) ?? null;
 
       const parsedAdaptationSet : IParsedAdaptation =
-        { id: (isTrickModeTrack != null ? "trickmode-" : "") + adaptationID,
+        { id: (isTrickModeTrack ? "trickmode-" : "") + adaptationID,
           representations,
           type };
       if (adaptation.attributes.language != null) {
