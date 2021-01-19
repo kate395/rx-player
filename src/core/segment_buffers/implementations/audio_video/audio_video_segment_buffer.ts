@@ -330,6 +330,7 @@ export default class AudioVideoSegmentBuffer extends SegmentBuffer<BufferSource>
    * @param {Event} error
    */
   private _onPendingTaskError(err : unknown) : void {
+    debugger;
     this._lastInitSegment = null; // initialize init segment as a security
     if (this._pendingTask !== null) {
       const error = err instanceof Error ?

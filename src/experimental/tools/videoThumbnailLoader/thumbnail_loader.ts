@@ -24,6 +24,7 @@ import {
 import {
   catchError,
   filter,
+  finalize,
   ignoreElements,
   map,
   mergeMap,
@@ -265,11 +266,13 @@ export default class VideoThumbnailLoader {
           throw new VideoThumbnailLoaderError("LOADING_ERROR", message);
         })
       )
-    ).pipe(take(1)).toPromise(PPromise)
-      .finally(() => {
+    ).pipe(
+      take(1),
+      finalize(() => {
         this._currentJob = undefined;
         killJob$.complete();
-      });
+      })
+    ).toPromise(PPromise);
 
     this._currentJob = {
       contentInfos,
