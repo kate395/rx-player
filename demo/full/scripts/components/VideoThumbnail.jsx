@@ -1,6 +1,6 @@
 import React from "react";
 import VideoThumbnailLoader, {
-  DASH_FETCHER
+  DASH_LOADER
 } from "../../../../src/experimental/tools/videoThumbnailLoader";
 
 /**
@@ -88,7 +88,7 @@ class VideoThumbnail extends React.Component {
           };
           this.videoThumbnailLoader =
             new VideoThumbnailLoader(el, fakePlayer);
-          this.videoThumbnailLoader.addFetcher(DASH_FETCHER);
+          this.videoThumbnailLoader.addLoader(DASH_LOADER);
         }
       } }></video>
     </div>;

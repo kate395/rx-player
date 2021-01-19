@@ -15,9 +15,9 @@
  */
 
 import mpl from "../../../../transports/metaplaylist";
-import { IFetchers } from "../types";
+import { ILoaders } from "../types";
 
-export default function addMplFeature(fetchers: IFetchers): void {
+export default function addMplFeature(loaders: ILoaders): void {
   const transports = mpl({ lowLatencyMode: false });
-  fetchers.metaplaylist = transports;
+  loaders.metaplaylist = transports;
 }

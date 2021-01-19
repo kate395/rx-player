@@ -49,25 +49,23 @@ videoThumbnailLoader.setTime(200);
 
 ## Functions ###################################################################
 
-### addFetcher #################################################################
+### addLoader ##################################################################
 
 _arguments_:
-  - _fetcher_ (``Object``): Imported fetcher from VideoThumbnailLoader package.
+  - _loader_ (``Object``): Imported loader from VideoThumbnailLoader package.
 
 To be able to load and parse segments from a specific streaming format, you must
-import the corresponding fetcher and add it to the related instance :
+import the corresponding loader and add it to the related instance :
 
 #### Example
 
 ```js
   import {
-    DASH_FETCHER, /* dash fetcher */
-    SMOOTH_FETCHER, /* smooth fetcher */
-    MPL_FETCHER, /* metaplaylist fetcher */
+    DASH_LOADER, /* dash loader */
+    MPL_LOADER, /* metaplaylist loader */
   } from "rx-player/experimental/tools/videoThumbnailLoader";
-  videoThumbnailLoader.addFetcher(DASH_FETCHER);
-  videoThumbnailLoader.addFetcher(SMOOTH_FETCHER);
-  videoThumbnailLoader.addFetcher(MPL_FETCHER);
+  videoThumbnailLoader.addLoader(DASH_LOADER);
+  videoThumbnailLoader.addLoader(MPL_LOADER);
 ```
 
 ### setTime ####################################################################
@@ -102,6 +100,8 @@ every failure code (``error.code``) :
                   element.
 - ABORTED : The loading has been aborted (probably because of another loading
             started)
+- NO_LOADER : Trickmode track can't be loaded as no loader was imported, or
+              exists for this type of content (e.g. HSS content)
 
 #### Example
 

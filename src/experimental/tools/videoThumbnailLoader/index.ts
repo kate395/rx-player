@@ -15,13 +15,11 @@
  */
 
 import VideoThumbnailLoader, {
-  DASH_FETCHER,
-  MPL_FETCHER,
-  SMOOTH_FETCHER,
+  DASH_LOADER,
+  MPL_LOADER,
 } from "./thumbnail_loader";
 export {
-  DASH_FETCHER,
-  MPL_FETCHER,
-  SMOOTH_FETCHER,
+  DASH_LOADER,
+  MPL_LOADER,
 };
 export default VideoThumbnailLoader;

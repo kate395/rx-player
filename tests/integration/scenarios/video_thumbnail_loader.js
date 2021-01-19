@@ -1,13 +1,13 @@
 import { expect } from "chai";
 import RxPlayer from "../../../src";
 import VideoThumbnailLoader, {
-  DASH_FETCHER,
+  DASH_LOADER,
 } from "../../../src/experimental/tools/videoThumbnailLoader";
 import { manifestInfos } from "../../contents/DASH_static_SegmentTimeline";
 import XHRMock from "../../utils/request_mock";
 import sleep from "../../utils/sleep";
 
-describe("Video Thumbnail Loader", () => {
+describe.only("Video Thumbnail Loader", () => {
   let rxPlayer;
   let xhrMock;
 
@@ -28,7 +28,7 @@ describe("Video Thumbnail Loader", () => {
     const videoElement = document.createElement("video");
     const videoThumbnailLoader =
       new VideoThumbnailLoader(videoElement, rxPlayer);
-    videoThumbnailLoader.addFetcher(DASH_FETCHER);
+    videoThumbnailLoader.addLoader(DASH_LOADER);
     let time;
     let error;
     try {
@@ -54,7 +54,7 @@ describe("Video Thumbnail Loader", () => {
       .not.to.equal(undefined);
     const videoThumbnailLoader =
       new VideoThumbnailLoader(videoElement, rxPlayer);
-    videoThumbnailLoader.addFetcher(DASH_FETCHER);
+    videoThumbnailLoader.addLoader(DASH_LOADER);
     let time;
     let error;
     try {
@@ -91,7 +91,7 @@ describe("Video Thumbnail Loader", () => {
     }
     expect(error).not.to.equal(undefined);
     expect(error.message).to.equal("VideoThumbnailLoaderError: No imported "+
-                                   "fetcher for this transport type: dash");
+                                   "loader for this transport type: dash");
   });
 
   it("should load one thumbnail", async () => {
@@ -109,7 +109,7 @@ describe("Video Thumbnail Loader", () => {
       .not.to.equal(undefined);
     const videoThumbnailLoader =
       new VideoThumbnailLoader(videoElement, rxPlayer);
-    videoThumbnailLoader.addFetcher(DASH_FETCHER);
+    videoThumbnailLoader.addLoader(DASH_LOADER);
     let time;
     let error;
     try {
@@ -143,7 +143,7 @@ describe("Video Thumbnail Loader", () => {
       .not.to.equal(undefined);
     const videoThumbnailLoader =
       new VideoThumbnailLoader(videoElement, rxPlayer);
-    videoThumbnailLoader.addFetcher(DASH_FETCHER);
+    videoThumbnailLoader.addLoader(DASH_LOADER);
     let time;
     let error;
     try {
@@ -195,7 +195,7 @@ describe("Video Thumbnail Loader", () => {
       .not.to.equal(undefined);
     const videoThumbnailLoader =
       new VideoThumbnailLoader(videoElement, rxPlayer);
-    videoThumbnailLoader.addFetcher(DASH_FETCHER);
+    videoThumbnailLoader.addLoader(DASH_LOADER);
     let time;
     let error;
 
@@ -248,7 +248,7 @@ describe("Video Thumbnail Loader", () => {
       .not.to.equal(undefined);
     const videoThumbnailLoader =
       new VideoThumbnailLoader(videoElement, rxPlayer);
-    videoThumbnailLoader.addFetcher(DASH_FETCHER);
+    videoThumbnailLoader.addLoader(DASH_LOADER);
 
     xhrMock.lock();
     videoThumbnailLoader.setTime(wantedThumbnail1.time);
@@ -290,7 +290,7 @@ describe("Video Thumbnail Loader", () => {
       .not.to.equal(undefined);
     const videoThumbnailLoader =
       new VideoThumbnailLoader(videoElement, rxPlayer);
-    videoThumbnailLoader.addFetcher(DASH_FETCHER);
+    videoThumbnailLoader.addLoader(DASH_LOADER);
 
     let error1;
     let error2;

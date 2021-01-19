@@ -27,9 +27,12 @@ import {
   shareReplay,
   tap,
 } from "rxjs/operators";
-import createSegmentLoader from "../../../core/fetchers/segment/create_segment_loader";
+import {
+  ISegmentLoaderContent,
+  ISegmentLoaderEvent
+} from "../../../core/fetchers/segment/create_segment_loader";
 import { AudioVideoSegmentBuffer } from "../../../core/segment_buffers/implementations";
-import { ITransportAudioVideoSegmentPipeline } from "../../../transports";
+import { ITransportAudioVideoSegmentParser } from "../../../transports";
 import prepareSourceBuffer from "./prepare_source_buffer";
 import { IContentInfos } from "./types";
 
@@ -48,16 +51,13 @@ const _currentContentInfos: WeakMap<HTMLMediaElement,
  */
 export function initSourceBuffer$(contentInfos: IContentInfos,
                                   element: HTMLVideoElement,
-                                  { loader, parser }: ITransportAudioVideoSegmentPipeline
+                                  { segmentLoader,
+                                    segmentParser }: {
+                                    segmentLoader: (x : ISegmentLoaderContent) => 
+                                      Observable<ISegmentLoaderEvent<Uint8Array | ArrayBuffer | null>>,
+                                    segmentParser: ITransportAudioVideoSegmentParser,
+                                  }
 ): Observable<AudioVideoSegmentBuffer> {
-  const segmentLoader = createSegmentLoader(
-    loader,
-    undefined,
-    { baseDelay: 0,
-      maxDelay: 0,
-      maxRetryRegular: 0,
-      maxRetryOffline: 0 });
-
   let _sourceBufferObservable$: Observable<AudioVideoSegmentBuffer>;
   const currentVideoSourceBuffer = _currentVideoSourceBuffers.get(element);
   const currentContentInfos = _currentContentInfos.get(element);
@@ -108,7 +108,7 @@ export function initSourceBuffer$(contentInfos: IContentInfos,
         filter((evt): evt is { type: "data"; value: { responseData: Uint8Array } } =>
           evt.type === "data"),
         mergeMap((evt) => {
-          return parser({
+          return segmentParser({
             response: {
               data: evt.value.responseData,
               isChunked: false,

@@ -39,7 +39,10 @@ import {
   initSourceBuffer$,
 } from "./init_source_buffer";
 import removeBufferAroundTime$ from "./remove_buffer_around_time";
-import { IContentInfos, IFetchers } from "./types";
+import {
+  IContentInfos,
+  ILoaders,
+} from "./types";
 import VideoThumbnailLoaderError from "./video_thumbnail_loader_error";
 
 const PPromise = typeof Promise === "function" ? Promise :
@@ -62,7 +65,7 @@ export default class VideoThumbnailLoader {
 
   private _player: Player;
   private _currentJob?: IJob;
-  private _fetcher: IFetchers = {};
+  private _loaders: ILoaders = {};
 
   constructor(videoElement: HTMLVideoElement,
               player: Player) {
@@ -71,12 +74,12 @@ export default class VideoThumbnailLoader {
   }
 
   /**
-   * Add imported fetcher to thumbnail loader fetcher object.
+   * Add imported loader to thumbnail loader loader object.
    * It allows to use it when setting time.
-   * @param {function} fetcherFunc
+   * @param {function} loaderFunc
    */
-  addFetcher(fetcherFunc: (features: IFetchers) => void): void {
-    fetcherFunc(this._fetcher);
+  addLoader(loaderFunc: (features: ILoaders) => void): void {
+    loaderFunc(this._loaders);
   }
 
   /**
@@ -151,18 +154,16 @@ export default class VideoThumbnailLoader {
                    time: number,
                    segment: ISegment
   ): Promise<unknown> {
-    const fetcher = this._fetcher[contentInfos.manifest.transport];
-    if (fetcher === undefined) {
+    const loader = this._loaders[contentInfos.manifest.transport];
+    if (loader === undefined) {
       const error =
-        new VideoThumbnailLoaderError("NO_FETCHER",
+        new VideoThumbnailLoaderError("NO_LOADER",
                                       "VideoThumbnailLoaderError: No " +
-                                      "imported fetcher for this transport type: " +
+                                      "imported loader for this transport type: " +
                                       contentInfos.manifest.transport);
       return PPromise.reject(error);
     }
-    const { loader, parser } = fetcher.video;
     const killJob$ = new Subject();
-
     const abortError$ = killJob$.pipe(
       map(() => {
         throw new VideoThumbnailLoaderError("ABORTED",
@@ -170,24 +171,27 @@ export default class VideoThumbnailLoader {
       })
     );
 
+    const segmentLoader = createSegmentLoader(
+      loader.video.loader,
+      undefined,
+      { baseDelay: 0,
+        maxDelay: 0,
+        maxRetryOffline: 0,
+        maxRetryRegular: 0 }
+    );
+    const { parser: segmentParser } = loader.video;
+
+
     const jobPromise = observableRace(
       abortError$,
       initSourceBuffer$(contentInfos,
                         this._videoElement,
-                        { loader, parser }).pipe(
+                        { segmentLoader,
+                          segmentParser }).pipe(
         mergeMap((videoSourceBuffer) => {
           const bufferCleaning$ =
             removeBufferAroundTime$(this._videoElement, videoSourceBuffer, time);
           log.debug("VTL: Removed buffer before appending segments.", time);
-
-          const segmentLoader = createSegmentLoader(
-            loader,
-            undefined,
-            { baseDelay: 0,
-              maxDelay: 0,
-              maxRetryOffline: 0,
-              maxRetryRegular: 0 }
-          );
 
           const segmentLoading$ = segmentLoader({
             manifest: contentInfos.manifest,
@@ -213,7 +217,7 @@ export default class VideoThumbnailLoader {
                                        start: segment.time / segment.timescale,
                                        end: (segment.time + segment.duration) /
                                          segment.timescale };
-              return parser({
+              return segmentParser({
                 response: {
                   data: evt.value.responseData,
                   isChunked: false,
@@ -281,6 +285,5 @@ export default class VideoThumbnailLoader {
   }
 }
 
-export { default as DASH_FETCHER } from "./features/dash";
-export { default as SMOOTH_FETCHER } from "./features/smooth";
-export { default as MPL_FETCHER } from "./features/metaplaylist";
+export { default as DASH_LOADER } from "./features/dash";
+export { default as MPL_LOADER } from "./features/metaplaylist";

@@ -27,4 +27,4 @@ export interface IContentInfos { manifest: Manifest;
                                  adaptation: Adaptation;
                                  representation: Representation; }
 
-export type IFetchers = Partial<Record<string, ITransportPipelines>>;
+export type ILoaders = Partial<Record<string, ITransportPipelines>>;
