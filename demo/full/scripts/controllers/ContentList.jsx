@@ -82,7 +82,6 @@ function formatContent(content) {
            drmInfos: content.drmInfos,
            fallbackKeyError: !!content.fallbackKeyError,
            fallbackLicenseRequest: !!content.fallbackLicenseRequest,
-           enableVideoThumbnails: !!content.enableVideoThumbnails,
            id: content.id,
            isDisabled,
            isLocalContent,
@@ -302,14 +301,12 @@ class ContentList extends React.Component {
             supplementaryImageTracks,
             supplementaryTextTracks,
             isLowLatency,
-            enableVideoThumbnails,
             drmInfos = [] } = content;
 
     getKeySystemsOption(drmInfos, { fallbackKeyError,
                                     fallbackLicenseRequest })
       .then((keySystems) => {
         loadVideo({ url,
-                    enableVideoThumbnails,
                     transport,
                     autoPlay,
                     supplementaryImageTracks,

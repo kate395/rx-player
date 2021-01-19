@@ -67,6 +67,7 @@ const PLAYER = ({ $destroy, state }, { videoElement, textTrackElement }) => {
     volume: player.getVolume(),
     wallClockDiff: undefined,
     manifest: undefined,
+    videoTrackHasTrickMode: false,
   });
 
   linkPlayerEventsToState(player, state, $destroy);

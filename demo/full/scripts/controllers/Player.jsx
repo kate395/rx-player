@@ -47,7 +47,8 @@ function Player() {
                    "isBuffering",
                    "isLoading",
                    "isReloading",
-                   "isStopped")
+                   "isStopped",
+                   "videoTrackHasTrickMode")
       .pipe(takeUntil($destroySubject))
       .subscribe(([
         newAutoPlayBlocked,
@@ -56,6 +57,7 @@ function Player() {
         isLoading,
         isReloading,
         newIsStopped,
+        videoTrackHasTrickMode,
       ]) => {
         setAutoPlayBlocked(newAutoPlayBlocked);
         setIsStopped(newIsStopped);
@@ -74,6 +76,9 @@ function Player() {
             displaySpinnerTimeout = 0;
           }
           setDisplaySpinner(false);
+        }
+        if (enableVideoThumbnails !== videoTrackHasTrickMode) {
+          setEnableVideoThumbnails(videoTrackHasTrickMode);
         }
       });
 
@@ -106,7 +111,6 @@ function Player() {
   }, [player]);
 
   const loadVideo = useCallback((video) => {
-    setEnableVideoThumbnails(video.enableVideoThumbnails);
     if (video.lowLatencyMode) {
       player.dispatch("ENABLE_LIVE_CATCH_UP");
     } else {
