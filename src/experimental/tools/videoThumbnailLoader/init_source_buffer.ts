@@ -95,8 +95,8 @@ export function initSourceBuffer$(contentInfos: IContentInfos,
 
   return _sourceBufferObservable$.pipe(
     mergeMap((sourceBuffer) => {
-      if (initSegment == null) {
-        throw new Error("No init segment.");
+      if (initSegment === null) {
+        return observableOf(sourceBuffer);
       }
       _currentContentInfos.set(element, contentInfos);
       const inventoryInfos = { manifest: contentInfos.manifest,

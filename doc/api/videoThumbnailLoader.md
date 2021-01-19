@@ -97,8 +97,6 @@ every failure code (``error.code``) :
 - NO_MANIFEST : No manifest available on current RxPlayer instance.
 - NO_TRACK : In the player manifest, there are either no period or no
              representation to get video chunks.
-- MISSING_INIT_DATA : The chosen track does not have an init data, so it can't
-                      be buffered.
 - NO_THUMBNAIL : No segments are available for this time of the track.
 - LOADING_ERROR : An error occured when loading a thumbnail into the video
                   element.

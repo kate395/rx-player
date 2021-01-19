@@ -111,14 +111,6 @@ export default class VideoThumbnailLoader {
         new VideoThumbnailLoaderError("NO_TRACK",
                                       "Couldn't find track for this time."));
     }
-    const initURL = contentInfos.representation.index
-      .getInitSegment()?.mediaURLs?.[0] ?? "";
-    if (initURL === "") {
-      return PPromise.reject(
-        new VideoThumbnailLoaderError("MISSING_INIT_DATA",
-                                      "Missing mandatory initialization data " +
-                                      "needed to display the thumbnails"));
-    }
     const segment = contentInfos.representation.index.getSegments(time, 10)[0];
     if (segment === undefined) {
       return PPromise.reject(
