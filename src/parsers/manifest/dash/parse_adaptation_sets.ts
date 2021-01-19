@@ -145,7 +145,6 @@ function hasSignLanguageInterpretation(
  * @param {Array.<Object>} representations
  * @param {Array.<Object>} representations
  * @param {Object} infos
- * @param {Boolean} isTrickModeTrack
  * @returns {string}
  */
 function getAdaptationID(
@@ -154,24 +153,30 @@ function getAdaptationID(
   infos : { isClosedCaption : boolean | undefined;
             isAudioDescription : boolean | undefined;
             isSignInterpreted : boolean | undefined;
-            type : string; },
-  isTrickModeTrack: boolean
+            isTrickModeTrack: boolean;
+            type : string; }
 ) : string {
   if (isNonEmptyString(adaptation.attributes.id)) {
     return adaptation.attributes.id;
   }
 
+  const { isClosedCaption,
+          isAudioDescription,
+          isSignInterpreted,
+          isTrickModeTrack,
+          type } = infos;
+
   let idString = infos.type;
   if (isNonEmptyString(adaptation.attributes.language)) {
     idString += `-${adaptation.attributes.language}`;
   }
-  if (infos.isClosedCaption === true) {
+  if (isClosedCaption === true) {
     idString += "-cc";
   }
-  if (infos.isAudioDescription === true) {
+  if (isAudioDescription === true) {
     idString += "-ad";
   }
-  if (infos.isSignInterpreted === true) {
+  if (isSignInterpreted === true) {
     idString += "-si";
   }
   if (isNonEmptyString(adaptation.attributes.contentType)) {
@@ -186,7 +191,7 @@ function getAdaptationID(
   if (isNonEmptyString(adaptation.attributes.frameRate)) {
     idString += `-${adaptation.attributes.frameRate}`;
   }
-  if (idString.length === infos.type.length) {
+  if (idString.length === type.length) {
     idString += representations.length > 0 ?
       ("-" + representations[0].id) : "-empty";
   }
@@ -383,8 +388,8 @@ export default function parseAdaptationSets(
                                          { isAudioDescription,
                                            isClosedCaption,
                                            isSignInterpreted,
-                                           type },
-                                         isTrickModeTrack);
+                                           isTrickModeTrack,
+                                           type });
 
       // Avoid duplicate IDs
       while (arrayIncludes(parsedAdaptationsIDs, adaptationID)) {
@@ -417,68 +422,66 @@ export default function parseAdaptationSets(
         parsedAdaptationSet.isSignInterpreted = true;
       }
 
+      const adaptationsOfTheSameType = parsedAdaptations[type];
       if (trickModeAttachedAdaptationIds !== undefined) {
         trickModeAdaptations.push({ adaptation: parsedAdaptationSet,
                                     trickModeAttachedAdaptationIds });
+      } else if (adaptationsOfTheSameType === undefined) {
+        parsedAdaptations[type] = [parsedAdaptationSet];
+        if (isMainAdaptation) {
+          lastMainAdaptationIndex[type] = 0;
+        }
       } else {
-        const adaptationsOfTheSameType = parsedAdaptations[type];
-        if (adaptationsOfTheSameType === undefined) {
-          parsedAdaptations[type] = [parsedAdaptationSet];
-          if (isMainAdaptation) {
-            lastMainAdaptationIndex[type] = 0;
-          }
-        } else {
-          let mergedInto : IParsedAdaptation|null = null;
+        let mergedInto : IParsedAdaptation|null = null;
 
-          // look if we have to merge this into another Adaptation
-          for (let k = 0; k < adaptationSetSwitchingIDs.length; k++) {
-            const id : string = adaptationSetSwitchingIDs[k];
-            const switchingInfos = adaptationSwitchingInfos[id];
-            if (switchingInfos != null &&
-                switchingInfos.newID !== newID &&
-                arrayIncludes(switchingInfos.adaptationSetSwitchingIDs, originalID))
+        // look if we have to merge this into another Adaptation
+        for (let k = 0; k < adaptationSetSwitchingIDs.length; k++) {
+          const id : string = adaptationSetSwitchingIDs[k];
+          const switchingInfos = adaptationSwitchingInfos[id];
+          if (switchingInfos != null &&
+              switchingInfos.newID !== newID &&
+              arrayIncludes(switchingInfos.adaptationSetSwitchingIDs, originalID))
+          {
+            const adaptationToMergeInto = arrayFind(adaptationsOfTheSameType,
+                                                    (a) => a.id === id);
+            if (adaptationToMergeInto != null &&
+                adaptationToMergeInto.audioDescription ===
+                  parsedAdaptationSet.audioDescription &&
+                adaptationToMergeInto.closedCaption ===
+                  parsedAdaptationSet.closedCaption &&
+                adaptationToMergeInto.language === parsedAdaptationSet.language)
             {
-              const adaptationToMergeInto = arrayFind(adaptationsOfTheSameType,
-                                                      (a) => a.id === id);
-              if (adaptationToMergeInto != null &&
-                  adaptationToMergeInto.audioDescription ===
-                    parsedAdaptationSet.audioDescription &&
-                  adaptationToMergeInto.closedCaption ===
-                    parsedAdaptationSet.closedCaption &&
-                  adaptationToMergeInto.language === parsedAdaptationSet.language)
-              {
-                log.info("DASH Parser: merging \"switchable\" AdaptationSets",
-                         originalID, id);
-                adaptationToMergeInto.representations
-                  .push(...parsedAdaptationSet.representations);
-                mergedInto = adaptationToMergeInto;
-              }
+              log.info("DASH Parser: merging \"switchable\" AdaptationSets",
+                       originalID, id);
+              adaptationToMergeInto.representations
+                .push(...parsedAdaptationSet.representations);
+              mergedInto = adaptationToMergeInto;
             }
           }
+        }
 
-          if (isMainAdaptation) {
-            const oldLastMainIdx = lastMainAdaptationIndex[type];
-            const newLastMainIdx = oldLastMainIdx === undefined ? 0 :
-                                                                  oldLastMainIdx + 1;
-            if (mergedInto === null) {
-              // put "main" Adaptation after all other Main Adaptations
+        if (isMainAdaptation) {
+          const oldLastMainIdx = lastMainAdaptationIndex[type];
+          const newLastMainIdx = oldLastMainIdx === undefined ? 0 :
+                                                                oldLastMainIdx + 1;
+          if (mergedInto === null) {
+            // put "main" Adaptation after all other Main Adaptations
+            adaptationsOfTheSameType.splice(newLastMainIdx, 0, parsedAdaptationSet);
+            lastMainAdaptationIndex[type] = newLastMainIdx;
+          } else {
+            const indexOf = adaptationsOfTheSameType.indexOf(mergedInto);
+            if (indexOf < 0) { // Weird, not found
               adaptationsOfTheSameType.splice(newLastMainIdx, 0, parsedAdaptationSet);
               lastMainAdaptationIndex[type] = newLastMainIdx;
-            } else {
-              const indexOf = adaptationsOfTheSameType.indexOf(mergedInto);
-              if (indexOf < 0) { // Weird, not found
-                adaptationsOfTheSameType.splice(newLastMainIdx, 0, parsedAdaptationSet);
-                lastMainAdaptationIndex[type] = newLastMainIdx;
-              } else if (oldLastMainIdx === undefined || indexOf > oldLastMainIdx) {
-                // Found but was not main
-                adaptationsOfTheSameType.splice(indexOf, 1);
-                adaptationsOfTheSameType.splice(newLastMainIdx, 0, mergedInto);
-                lastMainAdaptationIndex[type] = newLastMainIdx;
-              }
+            } else if (oldLastMainIdx === undefined || indexOf > oldLastMainIdx) {
+              // Found but was not main
+              adaptationsOfTheSameType.splice(indexOf, 1);
+              adaptationsOfTheSameType.splice(newLastMainIdx, 0, mergedInto);
+              lastMainAdaptationIndex[type] = newLastMainIdx;
             }
-          } else if (mergedInto === null) {
-            adaptationsOfTheSameType.push(parsedAdaptationSet);
           }
+        } else if (mergedInto === null) {
+          adaptationsOfTheSameType.push(parsedAdaptationSet);
         }
       }
     }
