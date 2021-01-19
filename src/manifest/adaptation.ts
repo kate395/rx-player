@@ -169,9 +169,10 @@ export default class Adaptation {
       this.isSignInterpreted = parsedAdaptation.isSignInterpreted;
     }
 
-    this.trickModeTracks = trickModeTracks !== undefined ?
-      trickModeTracks.map((track) => new Adaptation(track)) :
-      undefined;
+    if (trickModeTracks !== undefined &&
+        trickModeTracks.length > 0) {
+      this.trickModeTracks = trickModeTracks.map((track) => new Adaptation(track));
+    }
 
     const argsRepresentations = parsedAdaptation.representations;
     const representations : Representation[] = [];
