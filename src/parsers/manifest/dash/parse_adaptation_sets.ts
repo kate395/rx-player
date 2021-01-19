@@ -23,7 +23,6 @@ import {
   IParsedAdaptation,
   IParsedAdaptations,
   IParsedAdaptationType,
-  IParsedRepresentation,
 } from "../types";
 import attachTrickModeTrack from "./attach_trickmode_track";
 // eslint-disable-next-line max-len
@@ -149,7 +148,6 @@ function hasSignLanguageInterpretation(
  */
 function getAdaptationID(
   adaptation : IAdaptationSetIntermediateRepresentation,
-  representations : IParsedRepresentation[],
   infos : { isClosedCaption : boolean | undefined;
             isAudioDescription : boolean | undefined;
             isSignInterpreted : boolean | undefined;
@@ -166,7 +164,7 @@ function getAdaptationID(
           isTrickModeTrack,
           type } = infos;
 
-  let idString = infos.type;
+  let idString = type;
   if (isNonEmptyString(adaptation.attributes.language)) {
     idString += `-${adaptation.attributes.language}`;
   }
@@ -178,6 +176,9 @@ function getAdaptationID(
   }
   if (isSignInterpreted === true) {
     idString += "-si";
+  }
+  if (isTrickModeTrack) {
+    idString += "-trickmode";
   }
   if (isNonEmptyString(adaptation.attributes.contentType)) {
     idString += `-${adaptation.attributes.contentType}`;
@@ -191,11 +192,7 @@ function getAdaptationID(
   if (isNonEmptyString(adaptation.attributes.frameRate)) {
     idString += `-${adaptation.attributes.frameRate}`;
   }
-  if (idString.length === type.length) {
-    idString += representations.length > 0 ?
-      ("-" + representations[0].id) : "-empty";
-  }
-  return  (isTrickModeTrack ? "trickmode-" : "") + "adaptation-" + idString;
+  return idString;
 }
 
 /**
@@ -370,12 +367,7 @@ export default function parseAdaptationSets(
                                 hasSignLanguageInterpretation(accessibility) ? true :
                                                                                undefined;
 
-      const representations = parseRepresentations(representationsIR,
-                                                   adaptation,
-                                                   adaptationInfos);
-
       let adaptationID = getAdaptationID(adaptation,
-                                         representations,
                                          { isAudioDescription,
                                            isClosedCaption,
                                            isSignInterpreted,
@@ -393,6 +385,9 @@ export default function parseAdaptationSets(
       adaptationInfos.unsafelyBaseOnPreviousAdaptation = periodInfos
         .unsafelyBaseOnPreviousPeriod?.getAdaptation(adaptationID) ?? null;
 
+      const representations = parseRepresentations(representationsIR,
+                                                   adaptation,
+                                                   adaptationInfos);
       const parsedAdaptationSet : IParsedAdaptation =
         { id: adaptationID,
           representations,
