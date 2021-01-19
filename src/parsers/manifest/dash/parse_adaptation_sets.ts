@@ -394,7 +394,7 @@ export default function parseAdaptationSets(
         .unsafelyBaseOnPreviousPeriod?.getAdaptation(adaptationID) ?? null;
 
       const parsedAdaptationSet : IParsedAdaptation =
-        { id: (isTrickModeTrack ? "trickmode-" : "") + adaptationID,
+        { id: adaptationID,
           representations,
           type };
       if (adaptation.attributes.language != null) {
