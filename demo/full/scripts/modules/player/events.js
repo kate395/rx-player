@@ -65,7 +65,7 @@ const linkPlayerEventsToState = (player, state, $destroy) => {
         liveGap: player.getMaximumPosition() - player.getPosition(),
         playbackPosition: player.getPlaybackRate(),
         manifest: player.getManifest(),
-        videoTrackHasTrickMode: () => {
+        videoTrackHasTrickMode: (() => {
           const adaptations = player.getCurrentAdaptations();
           if (adaptations === null ||
               adaptations.video === undefined ||
@@ -73,7 +73,7 @@ const linkPlayerEventsToState = (player, state, $destroy) => {
             return false;
           }
           return true;
-        }
+        })()
       };
     }),
     takeUntil($destroy)
