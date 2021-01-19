@@ -266,15 +266,6 @@ export default function parseAdaptationSets(
     const { essentialProperties,
             roles } = adaptationChildren;
 
-    const isExclusivelyTrickModeTrack = (Array.isArray(essentialProperties) &&
-      essentialProperties.some((ep) =>
-        ep.schemeIdUri === "http://dashif.org/guidelines/trickmode"));
-
-    if (isExclusivelyTrickModeTrack) {
-      // We do not for the moment parse trickmode tracks
-      continue;
-    }
-
     const isMainAdaptation = Array.isArray(roles) &&
       roles.some((role) => role.value === "main") &&
       roles.some((role) => role.schemeIdUri === "urn:mpeg:dash:role:2011");
