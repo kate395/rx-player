@@ -98,7 +98,6 @@ export function initSourceBuffer$(contentInfos: IContentInfos,
       if (initSegment === null) {
         return observableOf(sourceBuffer);
       }
-      _currentContentInfos.set(element, contentInfos);
       const inventoryInfos = { manifest: contentInfos.manifest,
                                period: contentInfos.period,
                                adaptation: contentInfos.adaptation,
@@ -135,7 +134,8 @@ export function initSourceBuffer$(contentInfos: IContentInfos,
         }),
         mapTo(sourceBuffer)
       );
-    })
+    }),
+    tap(() => { _currentContentInfos.set(element, contentInfos); })
   );
 }
 
