@@ -38,13 +38,15 @@ export default function removeBufferAroundTime$(
   time: number,
   margin: number = 10 * 60
 ): Observable<unknown> {
-  return (videoElement.buffered.length > 0) ?
-    observableCombineLatest([
-      ((time - margin) > 0) ?
-        sourceBuffer.removeBuffer(0, time - margin) :
-        observableOf(null),
-      ((time + margin) < videoElement.duration) ?
-        sourceBuffer.removeBuffer(time + margin, videoElement.duration) :
-        observableOf(null)]) :
-    observableOf(null);
+  if (videoElement.buffered.length === 0) {
+    return observableOf(null);
+  }
+  const bufferRemovals$ = [];
+  if ((time - margin) > 0) {
+    bufferRemovals$.push(sourceBuffer.removeBuffer(0, time - margin));
+  }
+  if ((time + margin) < videoElement.duration) {
+    bufferRemovals$.push(sourceBuffer.removeBuffer(time + margin, videoElement.duration));
+  }
+  return observableCombineLatest(bufferRemovals$);
 }
