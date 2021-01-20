@@ -40,11 +40,6 @@ import {
   setMediaKeys,
 } from "./eme";
 import * as events from "./event_listeners";
-import {
-  exitFullscreen,
-  isFullscreen,
-  requestFullscreen,
-} from "./fullscreen";
 import hasEMEAPIs from "./has_eme_apis";
 import isCodecSupported from "./is_codec_supported";
 import isOffline from "./is_offline";
@@ -77,7 +72,6 @@ export {
   closeSession,
   CustomMediaKeySystemAccess,
   events,
-  exitFullscreen,
   generateKeyRequest,
   getInitData,
   hasEMEAPIs,
@@ -88,7 +82,6 @@ export {
   ICustomMediaKeys,
   ICompatSourceBuffer,
   isCodecSupported,
-  isFullscreen,
   isOffline,
   isPlaybackStuck,
   isVTTCue,
@@ -97,7 +90,6 @@ export {
   MediaSource_,
   onHeightWidthChange,
   play$,
-  requestFullscreen,
   requestMediaKeySystemAccess,
   setElementSrc$,
   setMediaKeys,
