@@ -100,6 +100,7 @@ export interface IClockTick extends IMediaInfos {
   stalled : IStalledStatus | null;
   getCurrentTime : () => number;
   setCurrentTime: (time: number) => void;
+  mediaInternalSeeking: boolean;
 }
 
 const { SAMPLING_INTERVAL_MEDIASOURCE,
@@ -348,17 +349,29 @@ function createClock(
   options : IClockOptions
 ) : Observable<IClockTick> {
   return observableDefer(() : Observable<IClockTick> => {
+    let mediaInternalSeeking = false;
     let lastTimings : IClockTick = objectAssign(
       getMediaInfos(mediaElement, "init"),
-      { stalled: null, getCurrentTime: () => mediaElement.currentTime, setCurrentTime: (time: number) => mediaElement.currentTime = time });
+      { stalled: null,
+        mediaInternalSeeking,
+        getCurrentTime: () => mediaElement.currentTime,
+        setCurrentTime: (time: number) => mediaElement.currentTime = time });
 
     function getCurrentClockTick(state : IMediaInfosState) : IClockTick {
       const mediaTimings = getMediaInfos(mediaElement, state);
       const stalledState = getStalledStatus(lastTimings, mediaTimings, options);
+      if (mediaInternalSeeking && stalledState === null) {
+        mediaInternalSeeking = false;
+      }
       const timings = objectAssign({},
                                    { stalled: stalledState,
+                                     mediaInternalSeeking,
                                      getCurrentTime: () => mediaElement.currentTime,
-                                     setCurrentTime: (time: number) => mediaElement.currentTime = time },
+                                     setCurrentTime: (time: number) => {
+                                       mediaInternalSeeking = true;
+                                       mediaElement.currentTime = time;
+                                     },
+                                    },
                                    mediaTimings);
       log.debug("API: current media element state", timings);
       return timings;

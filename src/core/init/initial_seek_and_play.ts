@@ -142,8 +142,8 @@ export default function seekAndLoadOnMediaEvents(
       return clock$.pipe(
         take(1),
         tap((clockTick) => {
-         clockTick.setCurrentTime(typeof startTime === "function" ? startTime() : startTime)
-      }))
+         clockTick.setCurrentTime(typeof startTime === "function" ? startTime() : startTime);
+      }));
     }),
     shareReplay({ refCount: true })
   );

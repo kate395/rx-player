@@ -425,9 +425,13 @@ export default function InitializeOnMediaSource(
                 // to flush the buffers
                 const { position } = evt.value;
                 if (position + 0.001 < evt.value.duration) {
-                  mediaElement.currentTime += 0.001;
+                  clock$.pipe(take(1), tap((tick) => {
+                    tick.setCurrentTime(mediaElement.currentTime + 0.001);
+                  }));
                 } else {
-                  mediaElement.currentTime = position;
+                  clock$.pipe(take(1), tap((tick) => {
+                    tick.setCurrentTime(position);
+                  }));
                 }
                 return null;
               case "protected-segment":
