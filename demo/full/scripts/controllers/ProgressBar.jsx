@@ -1,8 +1,9 @@
 import React from "react";
+import ImageThumbnail from "../components/ImageThumbnail";
 import ProgressbarComponent from "../components/ProgressBar.jsx";
 import ToolTip from "../components/ToolTip.jsx";
+import VideoThumbnail from "../components/VideoThumbnail";
 import withModulesState from "../lib/withModulesState.jsx";
-import Thumbnail from "../components/Thumbnail.jsx";
 
 class Progressbar extends React.Component {
   constructor(...args) {
@@ -159,13 +160,17 @@ class Progressbar extends React.Component {
             /> : null
         }
         {
-          thumbnailIsVisible ? <Thumbnail
-            imageTime={imageTime}
-            thumbnailIsVideo={enableVideoThumbnails}
-            xPosition={xThumbnailPosition}
-            image={image}
-            manifest={manifest}
-          /> : null
+          !thumbnailIsVisible ? null :
+            enableVideoThumbnails ?
+              <VideoThumbnail
+                xPosition={xThumbnailPosition}
+                time={imageTime}
+                manifest={manifest}
+              /> :
+              <ImageThumbnail
+                image={image}
+                xPosition={xThumbnailPosition}
+              />
         }
         <ProgressbarComponent
           seek={seek}
