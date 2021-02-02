@@ -3,8 +3,8 @@
 
 ## Overview ####################################################################
 
-The VideoThumbnailLoader is a tool that can help using a video track as a
-substitute of a manifest embedded thumbnail track.
+The VideoThumbnailLoader is a tool that can help exploiting a trickmode video
+track to provide thumbnails for a video content.
 
 The goal is to make a thumbnail out of HTML5 video element, by :
 - Managing the loading / appending of resources from a given track
@@ -12,7 +12,7 @@ The goal is to make a thumbnail out of HTML5 video element, by :
 - Exploiting the Media Source Extension API to make it invisible to user.
 
 The tool will need the loaded manifest to contain trickmode tracks. These kind
-of adaptation exists in MPEG-DASH and HLS, and contains lightweight video tracks,
+of track exists in MPEG-DASH and HLS, and contains lightweight video tracks,
 most of the time including one unique frame for each video segments. As video
 segments from trickmode tracks may be quicker to load and easier to decode, they
 are preferred over standard video tracks for creating thumbnails.
@@ -61,8 +61,8 @@ import the corresponding loader and add it to the related instance :
 
 ```js
   import {
-    DASH_LOADER, /* dash loader */
-    MPL_LOADER, /* metaplaylist loader */
+    DASH_LOADER,
+    MPL_LOADER,
   } from "rx-player/experimental/tools/videoThumbnailLoader";
   videoThumbnailLoader.addLoader(DASH_LOADER);
   videoThumbnailLoader.addLoader(MPL_LOADER);
