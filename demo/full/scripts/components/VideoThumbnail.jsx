@@ -21,6 +21,7 @@ class VideoThumbnail extends React.Component {
       style: {},
     };
     this.isSettingTime = false;
+    this._videoElement = undefined;
   }
 
   correctImagePosition() {
@@ -47,6 +48,14 @@ class VideoThumbnail extends React.Component {
 
   componentDidMount() {
     this.correctImagePosition();
+    if (this._videoElement !== undefined) {
+      const fakePlayer = {
+        getManifest: () => this.props.manifest,
+      };
+      this.videoThumbnailLoader =
+        new VideoThumbnailLoader(this._videoElement, fakePlayer);
+      this.videoThumbnailLoader.addLoader(DASH_LOADER);
+    }
   }
 
   componentDidUpdate() {
@@ -57,6 +66,7 @@ class VideoThumbnail extends React.Component {
     if (this.videoThumbnailLoader) {
       this.videoThumbnailLoader.dispose();
     }
+    this._videoElement = undefined;
   }
 
   render() {
@@ -77,20 +87,11 @@ class VideoThumbnail extends React.Component {
       style={style}
       ref={el => this.element = el}
     >
-      <video ref={ el => {
-        if (el !== null &&
-            (
-              !this.videoThumbnailLoader ||
-              this.videoThumbnailLoader._videoElement !== el
-            )) {
-          const fakePlayer = {
-            getManifest: () => this.props.manifest,
-          };
-          this.videoThumbnailLoader =
-            new VideoThumbnailLoader(el, fakePlayer);
-          this.videoThumbnailLoader.addLoader(DASH_LOADER);
+      <video ref={(videoElement) => {
+        if (videoElement !== null) {
+          this._videoElement = videoElement;
         }
-      } }></video>
+      }}></video>
     </div>;
 
     return (
