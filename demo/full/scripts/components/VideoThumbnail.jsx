@@ -17,8 +17,23 @@ class VideoThumbnail extends React.Component {
     this.positionIsCorrected = false;
     this.state = {
       style: {},
+      divSpinnerStyle: {
+        "background-color": "gray",
+        "position": "absolute",
+        "width": "100%",
+        "height": "100%",
+        "opacity": "50%",
+        "display": "flex",
+        "justify-content": "center",
+        "align-items": "center",
+      },
+      spinnerStyle: {
+        "width": "50%",
+        "margin": "auto",
+      },
+      displaySpinner : true,
     };
-    this.isSettingTime = false;
+    this.lastSetTime = undefined;
     this._videoElement = undefined;
   }
 
@@ -38,6 +53,18 @@ class VideoThumbnail extends React.Component {
 
     this.positionIsCorrected = true;
     this.setState({ style });
+  }
+
+  showSpinner() {
+    if (this.state.displaySpinner !== true) {
+      this.setState({ displaySpinner: true });
+    }
+  }
+
+  hideSpinner() {
+    if (this.state.displaySpinner !== false) {
+      this.setState({ displaySpinner: false });
+    }
   }
 
   componentWillReceiveProps() {
@@ -66,17 +93,31 @@ class VideoThumbnail extends React.Component {
   }
 
   render() {
-    const { style } = this.state;
+    const { style, divSpinnerStyle, spinnerStyle } = this.state;
 
     const videoThumbnailLoader = this.props.attachedVideoThumbnailLoader;
     if (videoThumbnailLoader) {
       const { time } = this.props;
-      if (!this.isSettingTime) {
-        this.isSettingTime = true;
-        videoThumbnailLoader.setTime(Math.floor(time))
-          .then(() => this.isSettingTime = false)
-          .catch(() => this.isSettingTime = false);
+      const roundedTime = Math.round(time);
+      let spinnerTimeout;
+      // Only show spinner when time has changed
+      if (this.lastSetTime !== roundedTime) {
+        // Wait a little before displaying spinner, to
+        // be sure loading takes time
+        spinnerTimeout = setTimeout(() => {
+          this.showSpinner();
+        }, 300);
       }
+      this.lastSetTime = roundedTime;
+      videoThumbnailLoader.setTime(roundedTime)
+        .then(() => {
+          clearTimeout(spinnerTimeout);
+          this.hideSpinner();
+        })
+        .catch(() => {
+          clearTimeout(spinnerTimeout);
+          this.hideSpinner();
+        });
     }
 
     const divToDisplay = <div
@@ -84,6 +125,16 @@ class VideoThumbnail extends React.Component {
       style={style}
       ref={el => this.element = el}
     >
+      {
+        this.state.displaySpinner ?
+          <div style={divSpinnerStyle}>
+            <img
+              src="../assets/spinner.gif"
+              style={spinnerStyle}
+            />
+          </div> :
+          null
+      }
       <video ref={(videoElement) => {
         if (videoElement !== null) {
           this._videoElement = videoElement;
