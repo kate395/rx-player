@@ -1,7 +1,5 @@
 import React from "react";
-import VideoThumbnailLoader, {
-  DASH_LOADER
-} from "../../../../src/experimental/tools/videoThumbnailLoader";
+import withModulesState from "../lib/withModulesState";
 
 /**
  * React Component which Displays a video thumbnail centered and on top
@@ -49,12 +47,7 @@ class VideoThumbnail extends React.Component {
   componentDidMount() {
     this.correctImagePosition();
     if (this._videoElement !== undefined) {
-      const fakePlayer = {
-        getManifest: () => this.props.manifest,
-      };
-      this.videoThumbnailLoader =
-        new VideoThumbnailLoader(this._videoElement, fakePlayer);
-      this.videoThumbnailLoader.addLoader(DASH_LOADER);
+      this.props.player.dispatch("ATTACH_VIDEO_THUMBNAIL_LOADER", this._videoElement);
     }
   }
 
@@ -63,8 +56,11 @@ class VideoThumbnail extends React.Component {
   }
 
   componentWillUnmount() {
-    if (this.videoThumbnailLoader) {
-      this.videoThumbnailLoader.dispose();
+    const { player, attachedVideoThumbnailLoader } = this.props;
+    const videoThumbnailLoader = attachedVideoThumbnailLoader;
+    if (videoThumbnailLoader) {
+      videoThumbnailLoader.dispose();
+      player.dispatch("REMOVE_VIDEO_THUMBNAIL_LOADER");
     }
     this._videoElement = undefined;
   }
@@ -72,11 +68,12 @@ class VideoThumbnail extends React.Component {
   render() {
     const { style } = this.state;
 
-    if (this.videoThumbnailLoader) {
+    const videoThumbnailLoader = this.props.attachedVideoThumbnailLoader;
+    if (videoThumbnailLoader) {
       const { time } = this.props;
       if (!this.isSettingTime) {
         this.isSettingTime = true;
-        this.videoThumbnailLoader.setTime(Math.floor(time))
+        videoThumbnailLoader.setTime(Math.floor(time))
           .then(() => this.isSettingTime = false)
           .catch(() => this.isSettingTime = false);
       }
@@ -100,4 +97,8 @@ class VideoThumbnail extends React.Component {
   }
 }
 
-export default VideoThumbnail;
+export default React.memo(withModulesState({
+  player: {
+    attachedVideoThumbnailLoader: "attachedVideoThumbnailLoader"
+  },
+})(VideoThumbnail));

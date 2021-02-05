@@ -112,7 +112,6 @@ class Progressbar extends React.Component {
     } = this.state;
     const {
       currentTime,
-      manifest,
       minimumPosition,
       maximumPosition,
       isContentLoaded,
@@ -165,7 +164,7 @@ class Progressbar extends React.Component {
               <VideoThumbnail
                 xPosition={xThumbnailPosition}
                 time={imageTime}
-                manifest={manifest}
+                player={player}
               /> :
               <ImageThumbnail
                 image={image}
@@ -188,7 +187,6 @@ class Progressbar extends React.Component {
 
 export default React.memo(withModulesState({
   player: {
-    manifest: "manifest",
     bufferGap: "bufferGap",
     currentTime: "currentTime",
     images: "images",
