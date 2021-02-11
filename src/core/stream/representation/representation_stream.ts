@@ -33,6 +33,7 @@ import {
   merge as observableMerge,
   Observable,
   of as observableOf,
+  of,
   ReplaySubject,
   Subject,
 } from "rxjs";
@@ -70,6 +71,7 @@ import {
   IStreamManifestMightBeOutOfSync,
   IStreamNeedsManifestRefresh,
   IStreamTerminatingEvent,
+  IEventMessagesEvent,
 } from "../types";
 import DownloadingQueue, {
   IDownloadingQueueEvent,
@@ -341,6 +343,7 @@ export default function RepresentationStream<T>({
   ) : Observable<IStreamEventAddedSegment<T> |
                  ISegmentFetcherWarning |
                  IProtectedSegmentEvent |
+                 IEventMessagesEvent |
                  IStreamManifestMightBeOutOfSync>
   {
     switch (evt.type) {
@@ -377,13 +380,25 @@ export default function RepresentationStream<T>({
 
       case "parsed-segment":
         return initSegmentState.segmentData$
-          .pipe(mergeMap((initSegmentData) =>
-            pushMediaSegment({ clock$,
-                               content,
-                               initSegmentData,
-                               parsedSegment: evt.value,
-                               segment: evt.segment,
-                               segmentBuffer })));
+          .pipe(mergeMap((initSegmentData) => {
+            if (evt.value.emsgs !== undefined) {
+              const emsgsEvent$ = of({ type: "event-messages" as const,
+                                       value: evt.value.emsgs });
+              return observableConcat(emsgsEvent$,
+                                      pushMediaSegment({ clock$,
+                                                         content,
+                                                         initSegmentData,
+                                                         parsedSegment: evt.value,
+                                                         segment: evt.segment,
+                                                         segmentBuffer }));
+            }
+            return pushMediaSegment({ clock$,
+                                      content,
+                                      initSegmentData,
+                                      parsedSegment: evt.value,
+                                      segment: evt.segment,
+                                      segmentBuffer });
+          }));
 
       case "end-of-segment": {
         const { segment } = evt.value;
