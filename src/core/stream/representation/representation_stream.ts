@@ -62,13 +62,13 @@ import {
 import { SegmentBuffer } from "../../segment_buffers";
 import EVENTS from "../events_generators";
 import {
-  IProtectedSegmentEvent,
+  IEncryptionDataEncounteredEvent,
   IQueuedSegment,
   IRepresentationStreamEvent,
-  IStreamStatusEvent,
   IStreamEventAddedSegment,
   IStreamManifestMightBeOutOfSync,
   IStreamNeedsManifestRefresh,
+  IStreamStatusEvent,
   IStreamTerminatingEvent,
 } from "../types";
 import DownloadingQueue, {
@@ -340,7 +340,7 @@ export default function RepresentationStream<T>({
     evt : IDownloadingQueueEvent<T>
   ) : Observable<IStreamEventAddedSegment<T> |
                  ISegmentFetcherWarning |
-                 IProtectedSegmentEvent |
+                 IEncryptionDataEncounteredEvent |
                  IStreamManifestMightBeOutOfSync>
   {
     switch (evt.type) {
@@ -364,16 +364,21 @@ export default function RepresentationStream<T>({
         });
         initSegmentState.segmentData$.next(evt.value.initializationData);
         initSegmentState.isParsed = true;
-        const protectedEvents$ = observableOf(
-          ...evt.value.segmentProtections.map(segmentProt => {
-            return EVENTS.protectedSegment(segmentProt);
-          }));
+
+        // Now that the initialization segment has been parsed - which may have
+        // included encryption information - take care of the encryption event
+        const allEncryptionData = representation.getAllEncryptionData();
+        const encEvt$ = allEncryptionData.length > 0 ?
+          observableOf(...allEncryptionData.map(p =>
+            EVENTS.encryptionDataEncountered(p))) :
+          EMPTY;
+
         const pushEvent$ = pushInitSegment({ clock$,
                                              content,
                                              segment: evt.segment,
                                              segmentData: evt.value.initializationData,
                                              segmentBuffer });
-        return observableMerge(protectedEvents$, pushEvent$);
+        return observableMerge(encEvt$, pushEvent$);
 
       case "parsed-segment":
         return initSegmentState.segmentData$
