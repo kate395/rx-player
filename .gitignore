@@ -26,3 +26,5 @@
 /experimental
 /types
 /tools
+
+/src/parsers/manifest/dash/wasm-parser/target
