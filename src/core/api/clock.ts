@@ -99,7 +99,6 @@ export interface IClockTick extends IMediaInfos {
   /** Set if the player is stalled, `null` if not. */
   stalled : IStalledStatus | null;
   getCurrentTime : () => number;
-  setCurrentTime: (time: number) => void;
   mediaInternalSeeking: boolean;
 }
 
@@ -319,6 +318,7 @@ function getStalledStatus(
 export interface IClockOptions {
   withMediaSource : boolean;
   lowLatencyMode : boolean;
+  currentTimeHandle: { isSeekingFromInside: boolean, getCurrentTime: () => number, setCurrentTime: (nb: number) => void }
 }
 
 /**
@@ -349,28 +349,23 @@ function createClock(
   options : IClockOptions
 ) : Observable<IClockTick> {
   return observableDefer(() : Observable<IClockTick> => {
-    let mediaInternalSeeking = false;
     let lastTimings : IClockTick = objectAssign(
       getMediaInfos(mediaElement, "init"),
       { stalled: null,
-        mediaInternalSeeking,
         getCurrentTime: () => mediaElement.currentTime,
-        setCurrentTime: (time: number) => mediaElement.currentTime = time });
+        mediaInternalSeeking: options.currentTimeHandle.isSeekingFromInside,
+      });
 
     function getCurrentClockTick(state : IMediaInfosState) : IClockTick {
       const mediaTimings = getMediaInfos(mediaElement, state);
       const stalledState = getStalledStatus(lastTimings, mediaTimings, options);
-      if (mediaInternalSeeking && stalledState === null) {
-        mediaInternalSeeking = false;
+      if (options.currentTimeHandle.isSeekingFromInside && stalledState === null) {
+        options.currentTimeHandle.isSeekingFromInside = false;
       }
       const timings = objectAssign({},
                                    { stalled: stalledState,
-                                     mediaInternalSeeking,
+                                     mediaInternalSeeking: options.currentTimeHandle.isSeekingFromInside,
                                      getCurrentTime: () => mediaElement.currentTime,
-                                     setCurrentTime: (time: number) => {
-                                       mediaInternalSeeking = true;
-                                       mediaElement.currentTime = time;
-                                     },
                                     },
                                    mediaTimings);
       log.debug("API: current media element state", timings);

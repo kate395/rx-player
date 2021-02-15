@@ -130,9 +130,11 @@ export default function seekAndLoadOnMediaEvents(
     mediaElement,
     startTime,
     mustAutoPlay,
+    currentTimeHandle,
     isDirectfile } : { clock$ : Observable<IInitClockTick>;
                        isDirectfile : boolean;
                        mediaElement : HTMLMediaElement;
+                       currentTimeHandle: { isSeekingFromInside: boolean, getCurrentTime: () => number, setCurrentTime: (nb: number) => void }
                        mustAutoPlay : boolean;
                        startTime : number|(() => number); }
 ) : { seek$ : Observable<unknown>; load$ : Observable<ILoadEvents> } {
@@ -141,8 +143,8 @@ export default function seekAndLoadOnMediaEvents(
     mergeMap(() => {
       return clock$.pipe(
         take(1),
-        tap((clockTick) => {
-         clockTick.setCurrentTime(typeof startTime === "function" ? startTime() : startTime);
+        tap(() => {
+          currentTimeHandle.setCurrentTime(typeof startTime === "function" ? startTime() : startTime)
       }));
     }),
     shareReplay({ refCount: true })

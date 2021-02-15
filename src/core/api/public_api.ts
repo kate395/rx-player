@@ -731,11 +731,19 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     // inilialize `_priv_playing$` to false (meaning the content is not playing yet)
     this._priv_playing$.next(false);
 
-    const videoElement = this.videoElement;
 
+    const videoElement = this.videoElement;
+    const _priv_currentTimeHandler = {
+      isSeekingFromInside: false,
+      getCurrentTime: () => videoElement.currentTime,
+      setCurrentTime(time: number) {
+        this.isSeekingFromInside = true;
+        videoElement.currentTime = time
+      }
+    }
     /** Global "clock" used for content playback */
     const clock$ = createClock(videoElement, { withMediaSource: !isDirectFile,
-                                               lowLatencyMode });
+                                               lowLatencyMode, currentTimeHandle: _priv_currentTimeHandler });
 
     /** Emit when the current content has been stopped. */
     const contentIsStopped$ = observableMerge(
@@ -826,6 +834,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
                                                     autoPlay,
                                                     bufferOptions,
                                                     clock$,
+                                                    currentTimeHandle: _priv_currentTimeHandler,
                                                     content: { initialManifest,
                                                                manifestUpdateUrl,
                                                                url },
@@ -908,6 +917,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
                                              mediaElement: videoElement,
                                              speed$: this._priv_speed$,
                                              startAt,
+                                             currentTimeHandle: _priv_currentTimeHandler,
                                              url })
           .pipe(takeUntil(contentIsStopped$));
 
