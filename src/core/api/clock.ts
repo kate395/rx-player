@@ -84,6 +84,7 @@ export interface IStalledStatus {
   /** What started the player to stall. */
   reason : "seeking" | // Building buffer after seeking
            "not-ready" | // Building buffer after low readyState
+           "internal-seek" | // Seeking performed internally
            "buffering"; // Other cases
   /** `performance.now` at the time the stalling happened. */
   timestamp : number;
@@ -99,7 +100,6 @@ export interface IClockTick extends IMediaInfos {
   /** Set if the player is stalled, `null` if not. */
   stalled : IStalledStatus | null;
   getCurrentTime : () => number;
-  mediaInternalSeeking: boolean;
 }
 
 const { SAMPLING_INTERVAL_MEDIASOURCE,
@@ -139,6 +139,7 @@ function getResumeGap(stalled : IStalledStatus, lowLatencyMode : boolean) : numb
 
   switch (stalled.reason) {
     case "seeking":
+    case "internal-seek":
       return RESUME_GAP_AFTER_SEEKING[suffix];
     case "not-ready":
       return RESUME_GAP_AFTER_NOT_ENOUGH_DATA[suffix];
@@ -216,7 +217,8 @@ function getMediaInfos(
 function getStalledStatus(
   prevTimings : IClockTick,
   currentTimings : IMediaInfos,
-  { withMediaSource, lowLatencyMode } : IClockOptions
+  { withMediaSource, lowLatencyMode } : IClockOptions,
+  internalSeek: number | null
 ) : IStalledStatus | null {
   const { state: currentState,
           position: currentTime,
@@ -293,11 +295,15 @@ function getStalledStatus(
   if (shouldUnstall === true) {
     return null;
   } else if (shouldStall === true || prevStalled !== null) {
-    let reason : "seeking" | "not-ready" | "buffering";
+    let reason : "seeking" | "not-ready" | "buffering" | "internal-seek";
     if (currentState === "seeking" ||
         currentTimings.seeking ||
         prevStalled !== null && prevStalled.reason === "seeking") {
-      reason = "seeking";
+          if (internalSeek) {
+            reason = "internal-seek";
+          } else {
+            reason = "seeking";
+          }
     } else if (readyState === 1) {
       reason = "not-ready";
     } else {
@@ -318,7 +324,6 @@ function getStalledStatus(
 export interface IClockOptions {
   withMediaSource : boolean;
   lowLatencyMode : boolean;
-  currentTimeHandle: { isSeekingFromInside: boolean, getCurrentTime: () => number, setCurrentTime: (nb: number) => void }
 }
 
 /**
@@ -347,24 +352,28 @@ export interface IClockOptions {
 function createClock(
   mediaElement : HTMLMediaElement,
   options : IClockOptions
-) : Observable<IClockTick> {
-  return observableDefer(() : Observable<IClockTick> => {
+) : { clock$: Observable<IClockTick>, setCurrentTime: (time: number) => void } {
+  let internalSeek: number | null = null;
+  const setCurrentTime = (time: number) => {
+    internalSeek = time;
+    mediaElement.currentTime = time
+  }
+  const clock$ = observableDefer(() : Observable<IClockTick> => {
     let lastTimings : IClockTick = objectAssign(
       getMediaInfos(mediaElement, "init"),
       { stalled: null,
         getCurrentTime: () => mediaElement.currentTime,
-        mediaInternalSeeking: options.currentTimeHandle.isSeekingFromInside,
       });
 
     function getCurrentClockTick(state : IMediaInfosState) : IClockTick {
       const mediaTimings = getMediaInfos(mediaElement, state);
-      const stalledState = getStalledStatus(lastTimings, mediaTimings, options);
-      if (options.currentTimeHandle.isSeekingFromInside && stalledState === null) {
-        options.currentTimeHandle.isSeekingFromInside = false;
+      const stalledState = getStalledStatus(lastTimings, mediaTimings, options, internalSeek);
+      if (stalledState === null && internalSeek) {
+        internalSeek = null;
       }
+      log.debug("API: current media element state HELLO", internalSeek);
       const timings = objectAssign({},
                                    { stalled: stalledState,
-                                     mediaInternalSeeking: options.currentTimeHandle.isSeekingFromInside,
                                      getCurrentTime: () => mediaElement.currentTime,
                                     },
                                    mediaTimings);
@@ -403,6 +412,7 @@ function createClock(
     multicast(() => new ReplaySubject<IClockTick>(1)), // Always emit the last
     refCount()
   );
+  return { setCurrentTime, clock$ }
 }
 
 /**

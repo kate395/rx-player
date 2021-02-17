@@ -130,22 +130,19 @@ export default function seekAndLoadOnMediaEvents(
     mediaElement,
     startTime,
     mustAutoPlay,
-    currentTimeHandle,
+    setCurrentTime,
     isDirectfile } : { clock$ : Observable<IInitClockTick>;
                        isDirectfile : boolean;
                        mediaElement : HTMLMediaElement;
-                       currentTimeHandle: { isSeekingFromInside: boolean, getCurrentTime: () => number, setCurrentTime: (nb: number) => void }
+                       setCurrentTime: (nb: number) => void;
                        mustAutoPlay : boolean;
                        startTime : number|(() => number); }
 ) : { seek$ : Observable<unknown>; load$ : Observable<ILoadEvents> } {
   const seek$ = whenLoadedMetadata$(mediaElement).pipe(
     take(1),
-    mergeMap(() => {
-      return clock$.pipe(
-        take(1),
-        tap(() => {
-          currentTimeHandle.setCurrentTime(typeof startTime === "function" ? startTime() : startTime)
-      }));
+    tap(() => {
+      log.info("Init: Set initial time", startTime);
+      setCurrentTime(typeof startTime === "function" ? startTime() : startTime)
     }),
     shareReplay({ refCount: true })
   );

@@ -23,7 +23,6 @@ import {
   of as observableOf,
 } from "rxjs";
 import {
-  mapTo,
   mergeMap,
   startWith,
   switchMapTo,
@@ -49,9 +48,15 @@ export default function emitSeekEvents(
       return EMPTY;
     }
 
-    const isSeeking$ = observableFromEvent(mediaElement, "seeking")
-      .pipe(mapTo("seeking" as const));
-
+    const isSeeking$ = observableFromEvent(mediaElement, "seeking").pipe(
+      switchMapTo(
+        clock$.pipe(
+          mergeMap((tick: IClockTick) => {
+            return tick.stalled !== null && tick.stalled.reason !== "internal-seek" ?
+              observableOf("seeking" as const) :
+              EMPTY
+          }),
+          take(1))));
     const hasSeeked$ = observableFromEvent(mediaElement, "seeked").pipe(
       switchMapTo(
         clock$.pipe(

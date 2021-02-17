@@ -120,7 +120,7 @@ export default function StallAvoider(
   mediaElement : HTMLMediaElement,
   manifest: Manifest,
   discontinuityUpdate$: Observable<IDiscontinuityEvent>,
-  currentTimeHandle: { isSeekingFromInside: boolean, getCurrentTime: () => number, setCurrentTime: (nb: number) => void }
+  setCurrentTime: (nb: number) => void,
 ) : Observable<IStalledEvent | IUnstalledEvent | IWarningEvent> {
   const initialDiscontinuitiesStore : IDiscontinuityStoredInfo[] = [];
 
@@ -159,7 +159,7 @@ export default function StallAvoider(
           } else {
             log.warn("SA: skippable discontinuity found in the stream",
                      position, realSeekTime);
-            currentTimeHandle.setCurrentTime(realSeekTime)
+            setCurrentTime(realSeekTime)
             return EVENTS.warning(generateDiscontinuityError(stalledPosition,
                                                              realSeekTime));
           }
@@ -173,7 +173,7 @@ export default function StallAvoider(
                           stalled !== null)
       ) {
         log.warn("Init: After freeze seek", position, currentRange);
-        currentTimeHandle.setCurrentTime(position)
+        setCurrentTime(position)
         return EVENTS.warning(generateDiscontinuityError(position,
                                                          position));
 
@@ -194,7 +194,7 @@ export default function StallAvoider(
         if (mediaElement.currentTime < seekTo) {
           log.warn("Init: discontinuity encountered inferior to the threshold",
                    freezePosition, seekTo, BUFFER_DISCONTINUITY_THRESHOLD);
-          currentTimeHandle.setCurrentTime(seekTo)
+          setCurrentTime(seekTo)
           return EVENTS.warning(generateDiscontinuityError(freezePosition, seekTo));
         }
       }
@@ -209,7 +209,7 @@ export default function StallAvoider(
           {
             const nextPeriod = manifest.periods[i + 1];
             mediaElement.currentTime = nextPeriod.start;
-            currentTimeHandle.setCurrentTime(nextPeriod.start);
+            setCurrentTime(nextPeriod.start);
             return EVENTS.warning(generateDiscontinuityError(freezePosition,
                                                              nextPeriod.start));
 

@@ -106,7 +106,7 @@ export interface IDirectFileOptions { autoPlay : boolean;
                                       speed$ : Observable<number>;
                                       startAt? : IInitialTimeOptions;
                                       url? : string;
-                                      currentTimeHandle: { isSeekingFromInside: boolean, getCurrentTime: () => number, setCurrentTime: (nb: number) => void } }
+                                      setCurrentTime: (nb: number) => void }
 
 /**
  * Launch a content in "Directfile mode".
@@ -120,7 +120,7 @@ export default function initializeDirectfileContent({
   mediaElement,
   speed$,
   startAt,
-  currentTimeHandle,
+  setCurrentTime,
   url,
 } : IDirectFileOptions) : Observable<IDirectfileEvent> {
 
@@ -141,7 +141,7 @@ export default function initializeDirectfileContent({
                                                       mediaElement,
                                                       startTime: initialTime,
                                                       mustAutoPlay: autoPlay,
-                                                      currentTimeHandle,
+                                                      setCurrentTime,
                                                       isDirectfile: true });
 
   // Create EME Manager, an observable which will manage every EME-related

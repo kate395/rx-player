@@ -115,7 +115,7 @@ export interface IInitializeArguments {
   };
   /** Regularly emit current playback conditions. */
   clock$ : Observable<IInitClockTick>;
-  currentTimeHandle: { isSeekingFromInside: boolean, getCurrentTime: () => number, setCurrentTime: (nb: number) => void }
+  setCurrentTime: (time: number) => void;
   /** Information on the content we want to play */
   content : {
     /** Initial value of the Manifest, if already parsed. */
@@ -201,7 +201,7 @@ export default function InitializeOnMediaSource(
     startAt,
     textTrackOptions,
     transportPipelines,
-    currentTimeHandle } : IInitializeArguments
+    setCurrentTime } : IInitializeArguments
 ) : Observable<IInitEvent> {
   const { url, initialManifest, manifestUpdateUrl } = content;
   const { offlineRetry, segmentRetry, manifestRetry } = networkConfig;
@@ -338,7 +338,7 @@ export default function InitializeOnMediaSource(
         mediaElement,
         segmentFetcherCreator,
         speed$,
-        currentTimeHandle,
+        setCurrentTime,
       });
 
       // handle initial load and reloads
@@ -428,9 +428,9 @@ export default function InitializeOnMediaSource(
                 // to flush the buffers
                 const { position } = evt.value;
                 if (position + 0.001 < evt.value.duration) {
-                  currentTimeHandle.setCurrentTime(mediaElement.currentTime + 0.001);
+                  setCurrentTime(mediaElement.currentTime + 0.001);
                 } else {
-                  currentTimeHandle.setCurrentTime(position);
+                  setCurrentTime(position);
                 }
                 return null;
               case "protected-segment":

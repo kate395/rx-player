@@ -54,6 +54,7 @@ export default function getLoadedContentState(
   isPlaying : boolean,
   stalledStatus : { reason : "seeking" |
                              "not-ready" |
+                             "internal-seek" |
                              "buffering"; } |
                   null
 ) : IPlayerState {
@@ -72,6 +73,10 @@ export default function getLoadedContentState(
         gapBetweenDurationAndCurrentTime < FORCED_ENDED_THRESHOLD
     ) {
       return PLAYER_STATES.ENDED;
+    }
+
+    if (stalledStatus.reason === "internal-seek") {
+      return isPlaying ? PLAYER_STATES.PLAYING : PLAYER_STATES.PAUSED;
     }
 
     return stalledStatus.reason === "seeking" ? PLAYER_STATES.SEEKING :

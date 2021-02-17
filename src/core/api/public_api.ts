@@ -733,17 +733,9 @@ class Player extends EventEmitter<IPublicAPIEvent> {
 
 
     const videoElement = this.videoElement;
-    const _priv_currentTimeHandler = {
-      isSeekingFromInside: false,
-      getCurrentTime: () => videoElement.currentTime,
-      setCurrentTime(time: number) {
-        this.isSeekingFromInside = true;
-        videoElement.currentTime = time
-      }
-    }
     /** Global "clock" used for content playback */
-    const clock$ = createClock(videoElement, { withMediaSource: !isDirectFile,
-                                               lowLatencyMode, currentTimeHandle: _priv_currentTimeHandler });
+    const { setCurrentTime, clock$ } = createClock(videoElement, { withMediaSource: !isDirectFile,
+                                                                   lowLatencyMode });
 
     /** Emit when the current content has been stopped. */
     const contentIsStopped$ = observableMerge(
@@ -834,7 +826,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
                                                     autoPlay,
                                                     bufferOptions,
                                                     clock$,
-                                                    currentTimeHandle: _priv_currentTimeHandler,
+                                                    setCurrentTime,
                                                     content: { initialManifest,
                                                                manifestUpdateUrl,
                                                                url },
@@ -917,7 +909,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
                                              mediaElement: videoElement,
                                              speed$: this._priv_speed$,
                                              startAt,
-                                             currentTimeHandle: _priv_currentTimeHandler,
+                                             setCurrentTime,
                                              url })
           .pipe(takeUntil(contentIsStopped$));
 
