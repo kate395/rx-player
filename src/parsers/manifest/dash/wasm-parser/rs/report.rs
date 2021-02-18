@@ -49,6 +49,18 @@ impl ReportableValue for super::parse::SElement {
     }
 }
 
+impl ReportableValue for Vec<super::parse::SElement> {
+    #[inline(always)]
+    fn report_as_attr(&self, attr_name: AttributeName) {
+        unsafe {
+            onAttribute(
+                attr_name,
+                self.as_ptr() as *const u8,
+                self.len() * mem::size_of::<super::parse::SElement>());
+        }
+    }
+}
+
 impl<'a> ReportableValue for std::borrow::Cow<'a, [u8]> {
     #[inline(always)]
     fn report_as_attr(&self, attr_name: AttributeName) {

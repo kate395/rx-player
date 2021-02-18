@@ -16,19 +16,18 @@ use super::report::ReportableValue;
 pub fn process_mpd(reader : &mut BufReader<MPDReader>) {
     let mut reader = Reader::from_reader(reader);
     let mut buf = Vec::new();
-    let mut previous_s_base : f64 = 0.;
     reader.trim_text(true);
     loop {
         match reader.read_event(&mut buf) {
-            Ok(Event::Start(e)) => process_new_tag(&e, false, &mut previous_s_base),
-            Ok(Event::Empty(e)) => process_new_tag(&e, true, &mut previous_s_base),
+            Ok(Event::Start(e)) => process_new_tag(&mut reader, &e, false),
+            Ok(Event::Empty(e)) => process_new_tag(&mut reader, &e, true),
             Ok(Event::Text(e)) => if e.len() > 0 {
                 match e.unescaped() {
                     Ok(unescaped) => unescaped.report_as_attr(AttributeName::Text),
                     Err(err) => ParsingError::from(err).report_err(),
                 }
             },
-            Ok(Event::End(e)) => process_closing_tag(&e, &mut previous_s_base),
+            Ok(Event::End(e)) => process_closing_tag(&e),
             Ok(Event::Eof) => break, // exits the loop when reaching end of file
             Err(e) => ParsingError::from(e).report_err(),
             _ => (),
@@ -277,27 +276,80 @@ fn report_period_attrs(e : &quick_xml::events::BytesStart) {
     };
 }
 
-fn parse_s_tag(
-    e : &quick_xml::events::BytesStart,
-    previous_s_base : &mut f64
+fn process_segment_timeline(
+    reader : &mut quick_xml::Reader<&mut BufReader<MPDReader>>,
+    ss : &mut Vec<SElement>
 ) {
-    match SElement::from_xml(&e, *previous_s_base) {
-        Err(err) => err.report_err(),
-        Ok(s_element) => {
-            *previous_s_base = s_element.start + s_element.duration;
-            s_element.report_as_attr(AttributeName::SElement);
+    // let start = std::time::Instant::now();
+    let mut buf = Vec::new();
+    ParsingError("BEF".to_owned()).report_err();
+
+    // Will store the ending timestamp of the previous <S> element, starting
+    // at `0`.
+    // Most subsequent <S> elements won't explicitly indicate a starting
+    // timestamp which indicates that they start at the end of the previous
+    // <S> element (its starting timestamp + its duration).
+    let mut previous_s_base : f64 = 0.;
+
+    loop {
+        match reader.read_event(&mut buf) {
+            Ok(Event::Start(e)) | Ok(Event::Empty(e)) if e.name() == b"S" => {
+                match SElement::from_xml(&e, previous_s_base) {
+                    Ok(s_element) => {
+                        previous_s_base = s_element.start + s_element.duration;
+                        ss.push(s_element);
+                    },
+                    Err(err) => err.report_err(),
+                }
+            },
+            Ok(Event::End(e)) if e.name() == b"SegmentTimeline" => {
+                // let msg = "toto BEF";
+                // unsafe {
+                //     super::onCustomEvent(
+                //         CustomEventType::Error,
+                //         std::mem::transmute((msg).as_ptr()),
+                //         msg.len());
+                // }
+                // let time_taken = std::time::Instant::now().duration_since(start).as_millis() as u64;
+                // ParsingError(format!("AF").to_owned());
+                // ParsingError(format!("Time Taken: {}", time_taken).to_owned())
+                //  .report_err();
+                // ParsingError(format!("AF2").to_owned());
+                ParsingError("AF".to_owned()).report_err();
+                ss.report_as_attr(AttributeName::SegmentTimeline);
+                break;
+            },
+            Ok(Event::Eof) => {
+                ParsingError("Unexpected end of file in a SegmentTimeline.".to_owned())
+                 .report_err();
+                break;
+            }
+            Err(e) => ParsingError::from(e).report_err(),
+            _ => (),
         }
-    };
+        buf.clear();
+    }
+    ss.clear();
 }
 
 fn process_new_tag(
+    reader : &mut quick_xml::Reader<&mut BufReader<MPDReader>>,
     e : &quick_xml::events::BytesStart,
     is_empty_tag : bool,
-    previous_s_base : &mut f64
 ) {
     use super::report::{report_opening_tag, report_closing_tag};
+
+    // Create a common Vec for storing parsed <S> elements - from a
+    // possible SegmentTimeline, as they can be very numerous and should be in
+    // roughly similar numbers between SegmentTimelines, at least for the same
+    // Period.
+    // Re-using the same Vec (cleared between SegmentTimelines) allows us to
+    // profit from the maximum capacity between them without needing to
+    // re-allocating each time.
+    let mut ss_vec = Vec::new();
+
     match e.name() {
-        b"S" => parse_s_tag(&e, previous_s_base),
+        // b"S" => parse_s_tag(&e, previous_s_base),
         b"Representation" => {
             report_opening_tag(TagName::Representation);
             report_representation_attrs(&e);
@@ -323,12 +375,7 @@ fn process_new_tag(
 
             if is_empty_tag { report_closing_tag(TagName::SegmentBase); }
         },
-        b"SegmentTimeline" => {
-            *previous_s_base = 0.;
-            report_opening_tag(TagName::SegmentTimeline);
-
-            if is_empty_tag { report_closing_tag(TagName::SegmentTimeline); }
-        },
+        b"SegmentTimeline" => process_segment_timeline(reader, &mut ss_vec),
         b"SegmentList" => {
             report_opening_tag(TagName::SegmentList);
 
@@ -354,8 +401,7 @@ fn process_new_tag(
 }
 
 fn process_closing_tag(
-    e : &quick_xml::events::BytesEnd,
-    previous_s_base : &mut f64
+    e : &quick_xml::events::BytesEnd
 ) {
     use TagName::*;
     use super::report::report_closing_tag;
@@ -364,10 +410,6 @@ fn process_closing_tag(
         b"AdaptationSet" => report_closing_tag(AdaptationSet),
         b"SegmentTemplate" => report_closing_tag(SegmentTemplate),
         b"SegmentBase" => report_closing_tag(SegmentBase),
-        b"SegmentTimeline" => {
-            *previous_s_base = 0.;
-            report_closing_tag(SegmentTimeline);
-        },
         b"SegmentList" => report_closing_tag(SegmentList),
         b"Location" => report_closing_tag(Location),
         b"Period" => report_closing_tag(Period),

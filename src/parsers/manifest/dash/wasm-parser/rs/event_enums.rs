@@ -39,7 +39,6 @@ pub enum TagName {
     Initialization,
 
     // SegmentTemplate
-    SegmentTimeline,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -81,7 +80,7 @@ pub enum AttributeName {
     MediaRange = 18, // [f64, f64]
 
     // SegmentTimeline
-    SElement = 19, // SElement
+    SegmentTimeline = 19, // Vec<SElement>
 
     // SegmentTemplate
     StartNumber = 20, // f64

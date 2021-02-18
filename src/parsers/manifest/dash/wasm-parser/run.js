@@ -18,7 +18,7 @@ const tags = [
   "Role",
   "SupplementalProperty",
   "Initialization",
-  "SegmentTimeline",
+  "SegmentTemplate",
 ];
 
 const ATTRIBUTES = {
@@ -56,7 +56,7 @@ const ATTRIBUTES = {
   // SegmentURL
   MediaRange: 18, // [f64, f64]
 
-  // SegmentTimeline
+  // SegmentTemplate
   SElement: 19, // SElement
 
   // SegmentTemplate
@@ -176,7 +176,7 @@ function runProgram(url) {
   const parsersStack = [];
   const MPD = {
     periods: [],
-    segmentTimelines: []
+    segmentTemplates: []
   };
   window.MPD = MPD;
 
@@ -220,10 +220,10 @@ function runProgram(url) {
         currentObj = MPD;
         parserState.setNewParser(generateMPDAttrParser(MPD, linearMemory));
         break;
-      case "SegmentTimeline":
-        const segmentTimelineObj = { segments: [] };
-        window.MPD.segmentTimelines.push(segmentTimelineObj);
-        parserState.setNewParser(generateSegmentTimelineAttrParser(segmentTimelineObj,
+      case "SegmentTemplate":
+        const segmentTemplateObj = {};
+        window.MPD.segmentTemplates.push(segmentTemplateObj);
+        parserState.setNewParser(generateSegmentTemplateAttrParser(segmentTemplateObj,
                                                                    linearMemory));
         break;
     }
@@ -239,7 +239,7 @@ function runProgram(url) {
         parsersStack.pop();
         currentAttributeParser = parsersStack[parsersStack.length - 1];
         break;
-      case "SegmentTimeline":
+      case "SegmentTemplate":
         parsersStack.pop();
         currentAttributeParser = parsersStack[parsersStack.length - 1];
         break;
@@ -426,8 +426,8 @@ function generatePeriodAttrParser(periodObj, linearMemory) {
 }
 
 function generateAdaptationSetAttrParser(adaptationObj, linearMemory) {
-  const dataView = new DataView(linearMemory.buffer);
   return function onAdaptationSetAttribute(attr, ptr, len) {
+    const dataView = new DataView(linearMemory.buffer);
     switch (attr) {
       case ATTRIBUTES.Id:
         adaptationObj.id = parseString(linearMemory.buffer, ptr, len);
@@ -517,24 +517,28 @@ function generateAdaptationSetAttrParser(adaptationObj, linearMemory) {
   };
 }
 
-function generateSegmentTimelineAttrParser(segmentTimelineObj, linearMemory) {
-  const dataView = new DataView(linearMemory.buffer);
-  return function onSegmentTimelineAttribute(attr, ptr, len) {
+window.tot = 0;
+function generateSegmentTemplateAttrParser(segmentTemplateObj, linearMemory) {
+  return function onSegmentTemplateAttribute(attr, ptr, len) {
+    console.log(attr);
+    const dataView = new DataView(linearMemory.buffer);
     if (attr === 19) {
-      segmentTimelineObj.segments.push({
-        start: dataView.getFloat64(ptr, true),
-        duration:  dataView.getFloat64(ptr + 8, true),
-        repeatCount:  dataView.getFloat64(ptr + 16, true),
-      });
+      const now = performance.now();
+      console.time("TOTO");
+      segmentTemplateObj.timeline = [];
+      let base = ptr;
+      for (let i = 0; i < len / 24; i++) {
+        base += 24;
+        segmentTemplateObj.timeline.push({
+          start: dataView.getFloat64(base, true),
+          duration:  dataView.getFloat64(base + 8, true),
+          repeatCount:  dataView.getFloat64(base + 16, true),
+        });
+      }
+      const time = performance.now() - now;
+      console.error("!!!!", time);
+      console.timeEnd("TOTO");
+      window.tot += time;
     }
   };
 }
-
-// onmessage = function(e) {
-//   runProgram(e)
-//     .then(() => {
-//       console.log(performance.now());
-//       postMessage(parsedS);
-//     })
-//     .catch(e => console.error(e));
-// }
