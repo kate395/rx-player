@@ -1,29 +1,37 @@
 extern crate core;
 extern crate quick_xml;
 
-mod mpd_reader;
-mod event_enums;
-mod error;
-mod parse;
-mod report;
+mod events;
+mod errors;
+mod processor;
+mod reader;
+mod reportable;
 mod utils;
 
+pub use errors::{ParsingError, Result};
+
 use std::io::BufReader;
-use event_enums::*;
-use mpd_reader::MPDReader;
+use events::*;
+use processor::MPDProcessor;
+use reader::MPDReader;
 
 #[no_mangle]
 extern "C" {
-    /// Called each time a new known tag is encountered in the MPD
-    /// @see TagName
-    fn onTagOpen(tag_name : TagName);
+    /// Called each time a new known tag is encountered in the MPD.
+    /// The `tag_name` corresponds to the value of the TagName enum (@see
+    /// events), casted as a single byte.
+    fn onTagOpen(tag_name : u8);
 
-    fn onTagClose(tag_name : TagName);
+    /// Called each time a previously-opened known tag is encountered in the MPD
+    /// now closed.
+    /// The `tag_name` corresponds to the value of the TagName enum (@see
+    /// events), casted as a single byte.
+    fn onTagClose(tag_name : u8);
 
     /// Called when a new attribute has been parsed.
     fn onAttribute(
         // Integer identifying the attribute (linked to a specific type)
-        attr_name : AttributeName,
+        attr_name : u8,
 
         // Pointer to beginning of data in wasm memory
         ptr: *const u8,
@@ -45,9 +53,7 @@ extern "C" {
 
 #[no_mangle]
 pub extern "C" fn parse() {
-    let mpd_reader = MPDReader {};
-    let mut buf_read = BufReader::new(mpd_reader);
-    parse::process_mpd(&mut buf_read);
-    // let buf = Vec::with_capacity(READING_VEC_CAPACITY);
-    // parse::process_mpd(&mut mpd_reader);
+    let buf_read = BufReader::new(MPDReader {});
+    let mut processor = MPDProcessor::new(buf_read);
+    processor.process_mpd_from_root();
 }

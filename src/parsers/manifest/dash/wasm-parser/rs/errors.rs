@@ -1,8 +1,7 @@
-use std::mem;
-use super::{
-    CustomEventType,
-    onCustomEvent,
-};
+use crate::onCustomEvent;
+use crate::events::CustomEventType;
+
+pub type Result<T> = std::result::Result<T, ParsingError>;
 
 /// Very simple error type, only used to generate a String description of a
 /// parsing error, to then be reported on the JS-side.
@@ -14,11 +13,10 @@ impl ParsingError {
     /// error.
     pub fn report_err(&self) {
         let len = self.0.len();
+        // UNSAFE: We're using FFI, so we don't know how the pointer is used.
+        // Hopefully, the JavaScript-side should clone that value synchronously.
         unsafe {
-            onCustomEvent(
-                CustomEventType::Error,
-                mem::transmute((*self.0).as_ptr()),
-                len);
+            onCustomEvent(CustomEventType::Error, (*self.0).as_ptr(), len);
         }
     }
 }

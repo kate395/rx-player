@@ -534,6 +534,8 @@ export default class TimelineRepresentationIndex implements IRepresentationIndex
    * @returns {Array.<Object>}
    */
   private _getTimeline() : IIndexSegment[] {
+    console.timeEnd("WHILE4");
+    console.timeEnd("BEFORE3");
     if (this._parseTimeline === null) {
       if (this._index.timeline !== null) {
         return this._index.timeline;

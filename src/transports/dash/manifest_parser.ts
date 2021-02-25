@@ -78,6 +78,9 @@ export default function generateManifestParser(
                    // TODO find a way to check if Document?
                    response.responseData as Document;
 
+    console.time("BEFORE1");
+    console.time("BEFORE2");
+    console.time("BEFORE3");
     const externalClockOffset = serverTimeOffset ?? argClockOffset;
     const unsafelyBaseOnPreviousManifest = args.unsafeMode ? args.previousManifest :
                                                              null;
@@ -87,6 +90,7 @@ export default function generateManifestParser(
                                                       url,
                                                       referenceDateTime,
                                                       externalClockOffset });
+    console.timeEnd("BEFORE2");
     return loadExternalResources(parsedManifest);
 
     function loadExternalResources(

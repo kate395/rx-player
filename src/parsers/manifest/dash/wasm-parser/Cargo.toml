@@ -10,7 +10,8 @@ crate-type = ["cdylib"]
 
 [profile.release]
 lto = true
-# opt-level = "z"
+debug = true
+opt-level = 3
 
 [dependencies]
 quick-xml = "0.21.0"

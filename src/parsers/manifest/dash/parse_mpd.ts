@@ -93,6 +93,8 @@ export default function parseMPD(
   // Transform whole MPD into a parsed JS object representation
   const [mpdIR,
          warnings] = createMPDIntermediateRepresentation(root);
+  console.timeEnd("BEFORE1");
+  console.time("WHILE4");
   return loadExternalRessourcesAndParse(mpdIR, args, warnings);
 }
 
