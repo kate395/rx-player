@@ -17,12 +17,12 @@
 import {
   defer as observableDefer,
   EMPTY,
-  fromEvent as observableFromEvent,
   merge as observableMerge,
   Observable,
   of as observableOf,
 } from "rxjs";
 import {
+  distinctUntilChanged,
   mergeMap,
   startWith,
   switchMapTo,
@@ -48,24 +48,24 @@ export default function emitSeekEvents(
       return EMPTY;
     }
 
-    const isSeeking$ = observableFromEvent(mediaElement, "seeking").pipe(
-      switchMapTo(
-        clock$.pipe(
-          mergeMap((tick: IClockTick) => {
-            return tick.stalled !== null && tick.stalled.reason !== "internal-seek" ?
-              observableOf("seeking" as const) :
-              EMPTY
-          }),
-          take(1))));
-    const hasSeeked$ = observableFromEvent(mediaElement, "seeked").pipe(
+    const isSeeking$ = clock$.pipe(
+      distinctUntilChanged((prev, curr) => prev.stalled === curr.stalled ||
+                                           prev.stalled?.reason === curr.stalled?.reason),
+      mergeMap((tick: IClockTick) => {
+        return tick.stalled !== null && tick.stalled.reason !== "internal-seek" ?
+          observableOf("seeking" as const) :
+          EMPTY
+        }));
+    const hasSeeked$ = isSeeking$.pipe(
       switchMapTo(
         clock$.pipe(
           mergeMap((tick : IClockTick) => {
             return tick.stalled === null || tick.stalled.reason !== "seeking" ?
               observableOf("seeked" as const) :
               EMPTY;
-          }),
-          take(1))));
+            }),
+            take(1))
+        ));
     const seekingEvents$ = observableMerge(isSeeking$, hasSeeked$);
     return mediaElement.seeking ? seekingEvents$.pipe(startWith("seeking" as const)) :
                                   seekingEvents$;

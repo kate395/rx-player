@@ -734,7 +734,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
 
     const videoElement = this.videoElement;
     /** Global "clock" used for content playback */
-    const { setCurrentTime, clock$ } = createClock(videoElement, { withMediaSource: !isDirectFile,
+    const { getCurrentTime, setCurrentTime, clock$ } = createClock(videoElement, { withMediaSource: !isDirectFile,
                                                                    lowLatencyMode });
 
     /** Emit when the current content has been stopped. */
@@ -826,7 +826,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
                                                     autoPlay,
                                                     bufferOptions,
                                                     clock$,
-                                                    setCurrentTime,
+                                                    timeHandler: { setCurrentTime, getCurrentTime },
                                                     content: { initialManifest,
                                                                manifestUpdateUrl,
                                                                url },

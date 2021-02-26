@@ -35,6 +35,7 @@ export interface IStreamClockArguments {
   manifest : Manifest;
   speed$ : Observable<number>; // The last speed requested by the user
   startTime : number; // The time the player will seek when initialSeek$ emits
+  getCurrentTime: () => number; // Allows to fetch the current position at any time
 }
 
 /**
@@ -50,7 +51,8 @@ export default function createStreamClock(
     initialSeek$,
     manifest,
     speed$,
-    startTime } : IStreamClockArguments
+    startTime,
+    getCurrentTime } : IStreamClockArguments
 ) : Observable<IStreamOrchestratorClockTick> {
   let initialPlayPerformed = false;
   let initialSeekPerformed = false;
@@ -69,7 +71,7 @@ export default function createStreamClock(
         const { isLive } = manifest;
         return {
           position: tick.position,
-          getCurrentTime: tick.getCurrentTime,
+          getCurrentTime: getCurrentTime,
           duration: tick.duration,
           isPaused: initialPlayPerformed ? tick.paused :
                                            !autoPlay,

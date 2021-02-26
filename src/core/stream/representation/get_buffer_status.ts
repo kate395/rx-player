@@ -84,11 +84,11 @@ export default function getBufferStatus(
              representation : Representation; },
   tick : { position : number;
            wantedTimeOffset: number;
-           liveGap? : number;
-           getCurrentTime() : number; },
+           liveGap? : number; },
   fastSwitchThreshold : number | undefined,
   bufferGoal : number,
-  segmentBuffer : SegmentBuffer<unknown>
+  segmentBuffer : SegmentBuffer<unknown>,
+  getCurrentTime: () => number,
 ) : IBufferStatus {
   const { period, representation } = content;
   segmentBuffer.synchronizeInventory();
@@ -118,7 +118,7 @@ export default function getBufferStatus(
 
   /** List of segments we will need to download. */
   const neededSegments = getNeededSegments({ content,
-                                             currentPlaybackTime: tick.getCurrentTime(),
+                                             currentPlaybackTime: getCurrentTime(),
                                              fastSwitchThreshold,
                                              neededRange,
                                              bufferedSegments,

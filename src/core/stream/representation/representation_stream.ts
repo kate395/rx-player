@@ -104,8 +104,6 @@ export interface IRepresentationStreamClockTick {
    * starting position different from `0`.
    */
   wantedTimeOffset : number;
-  /** Fetch the precize position currently in the HTMLMediaElement. */
-  getCurrentTime() : number;
 }
 
 /** Item emitted by the `terminate$` Observable given to a RepresentationStream. */
@@ -167,6 +165,8 @@ export interface IRepresentationStreamArguments<T> {
    * `0` can be emitted to disable any kind of fast-switching.
    */
   fastSwitchThreshold$: Observable< undefined | number>;
+  /** Allow to fetch currentTime from the mediaElement */
+  getCurrentTime: () => number;
 }
 
 /** Internal event used to notify that the initialization segment has been parsed. */
@@ -223,6 +223,7 @@ export default function RepresentationStream<T>({
   segmentBuffer,
   segmentFetcher,
   terminate$,
+  getCurrentTime,
 } : IRepresentationStreamArguments<T>) : Observable<IRepresentationStreamEvent<T>> {
   const { manifest, period, adaptation, representation } = content;
   const bufferType = adaptation.type;
@@ -272,7 +273,8 @@ export default function RepresentationStream<T>({
                                      tick,
                                      fastSwitchThreshold,
                                      bufferGoal,
-                                     segmentBuffer);
+                                     segmentBuffer,
+                                     getCurrentTime);
       const { neededSegments } = status;
 
       // Add initialization segment if required

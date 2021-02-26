@@ -82,8 +82,6 @@ export interface IAdaptationStreamClockTick extends IRepresentationStreamClockTi
   bufferGap : number;
   /** `duration` property of the HTMLMediaElement on which the content plays. */
   duration : number;
-  /** Allows to fetch the current position at any time. */
-  getCurrentTime : () => number;
   /** If true, the player has been put on pause. */
   isPaused: boolean;
   /** Last "playback rate" asked by the user. */
@@ -102,6 +100,8 @@ export interface IAdaptationStreamArguments<T> {
    * The main AdaptationStream logic will be triggered on each `tick`.
    */
   clock$ : Observable<IAdaptationStreamClockTick>;
+  /** Allows to fetch the current position at any time. */
+  getCurrentTime: () => number;
   /** Content you want to create this Stream for. */
   content : { manifest : Manifest;
               period : Period;
@@ -174,6 +174,7 @@ export interface IAdaptationStreamOptions {
 export default function AdaptationStream<T>({
   abrManager,
   clock$,
+  getCurrentTime,
   content,
   options,
   segmentBuffer,
@@ -256,7 +257,7 @@ export default function AdaptationStream<T>({
         fromEstimate.manual &&
         !isFirstEstimate)
     {
-      return reloadAfterSwitch(period, clock$, DELTA_POSITION_AFTER_RELOAD.bitrateSwitch);
+      return reloadAfterSwitch(period, clock$, DELTA_POSITION_AFTER_RELOAD.bitrateSwitch, getCurrentTime);
     }
 
     /**
@@ -359,7 +360,8 @@ export default function AdaptationStream<T>({
                                     segmentFetcher,
                                     terminate$: terminateCurrentStream$,
                                     bufferGoal$,
-                                    fastSwitchThreshold$ })
+                                    fastSwitchThreshold$,
+                                    getCurrentTime })
         .pipe(catchError((err : unknown) => {
           const formattedError = formatError(err, {
             defaultCode: "NONE",

@@ -111,7 +111,8 @@ export default function StreamOrchestrator(
   abrManager : ABRManager,
   segmentBuffersStore : SegmentBuffersStore,
   segmentFetcherCreator : SegmentFetcherCreator<any>,
-  options: IStreamOrchestratorOptions
+  options: IStreamOrchestratorOptions,
+  getCurrentTime: () => number,
 ) : Observable<IStreamOrchestratorEvent> {
   const { manifest, initialPeriod } = content;
   const { maxBufferAhead$, maxBufferBehind$, wantedBufferAhead$ } = options;
@@ -417,7 +418,8 @@ export default function StreamOrchestrator(
                                          segmentFetcherCreator,
                                          segmentBuffersStore,
                                          options,
-                                         wantedBufferAhead$ }
+                                         wantedBufferAhead$,
+                                         getCurrentTime }
     ).pipe(
       mergeMap((evt : IPeriodStreamEvent) : Observable<IMultiplePeriodStreamsEvent> => {
         if (evt.type === "stream-status") {

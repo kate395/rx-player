@@ -33,6 +33,7 @@ import { MediaError } from "../../errors";
 import log from "../../log";
 import Manifest from "../../manifest";
 import ABRManager from "../abr";
+import { ITimeHandler } from "../api/clock";
 import { SegmentFetcherCreator } from "../fetchers";
 import SegmentBuffersStore from "../segment_buffers";
 import StreamOrchestrator, {
@@ -72,7 +73,8 @@ export interface IMediaSourceLoaderArguments {
    * Replay the last value on subscription.
    */
   speed$ : Observable<number>;
-  setCurrentTime: (nb: number) => void;
+   /** Allow to fetch or set time of the mediaElement */
+   timeHandler: ITimeHandler
 }
 
 /**
@@ -89,7 +91,7 @@ export default function createMediaSourceLoader(
     bufferOptions,
     abrManager,
     segmentFetcherCreator,
-    setCurrentTime } : IMediaSourceLoaderArguments
+    timeHandler: { setCurrentTime, getCurrentTime } } : IMediaSourceLoaderArguments
 ) : (mediaSource : MediaSource, initialTime : number, autoPlay : boolean) =>
   Observable<IMediaSourceLoaderEvent> {
   /**
@@ -137,7 +139,8 @@ export default function createMediaSourceLoader(
                                                      initialSeek$: seek$,
                                                      manifest,
                                                      speed$,
-                                                     startTime: initialTime });
+                                                     startTime: initialTime,
+                                                     getCurrentTime });
 
     /** Cancel endOfStream calls when streams become active again. */
     const cancelEndOfStream$ = new Subject<null>();
@@ -151,7 +154,8 @@ export default function createMediaSourceLoader(
                                         abrManager,
                                         segmentBuffersStore,
                                         segmentFetcherCreator,
-                                        bufferOptions
+                                        bufferOptions,
+                                        getCurrentTime,
     ).pipe(
       mergeMap((evt) : Observable<IMediaSourceLoaderEvent> => {
         switch (evt.type) {

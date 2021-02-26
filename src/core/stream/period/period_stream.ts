@@ -68,7 +68,6 @@ const { DELTA_POSITION_AFTER_RELOAD } = config;
 
 export interface IPeriodStreamClockTick {
   position : number; // the position we are in the video in s at the time of the tic
-  getCurrentTime : () => number; // fetch the current time
   duration : number; // duration of the HTMLMediaElement
   isPaused: boolean; // If true, the player is on pause
   liveGap? : number; // gap between the current position and the edge of a
@@ -91,6 +90,7 @@ export interface IPeriodStreamArguments {
   segmentBuffersStore : SegmentBuffersStore;
   options: IPeriodStreamOptions;
   wantedBufferAhead$ : BehaviorSubject<number>;
+  getCurrentTime: () => number;
 }
 
 /** Options tweaking the behavior of the PeriodStream. */
@@ -135,6 +135,7 @@ export default function PeriodStream({
   segmentBuffersStore,
   options,
   wantedBufferAhead$,
+  getCurrentTime
 } : IPeriodStreamArguments) : Observable<IPeriodStreamEvent> {
   const { period } = content;
 
@@ -164,7 +165,7 @@ export default function PeriodStream({
         if (segmentBufferStatus.type === "initialized") {
           log.info(`Stream: Clearing previous ${bufferType} SegmentBuffer`);
           if (SegmentBuffersStore.isNative(bufferType)) {
-            return reloadAfterSwitch(period, clock$, relativePosAfterSwitch);
+            return reloadAfterSwitch(period, clock$, relativePosAfterSwitch, getCurrentTime);
           }
           cleanBuffer$ = segmentBufferStatus.value
             .removeBuffer(period.start,
@@ -186,7 +187,7 @@ export default function PeriodStream({
       if (SegmentBuffersStore.isNative(bufferType) &&
           segmentBuffersStore.getStatus(bufferType).type === "disabled")
       {
-        return reloadAfterSwitch(period, clock$, relativePosAfterSwitch);
+        return reloadAfterSwitch(period, clock$, relativePosAfterSwitch, getCurrentTime);
       }
 
       log.info(`Stream: Updating ${bufferType} adaptation`, adaptation, period);
@@ -198,7 +199,7 @@ export default function PeriodStream({
                                                            bufferType,
                                                            adaptation,
                                                            options);
-          const playbackInfos = { currentTime: tick.getCurrentTime(),
+          const playbackInfos = { currentTime: getCurrentTime(),
                                   readyState: tick.readyState };
           const strategy = getAdaptationSwitchStrategy(segmentBuffer,
                                                        period,
@@ -206,7 +207,7 @@ export default function PeriodStream({
                                                        playbackInfos,
                                                        options);
           if (strategy.type === "needs-reload") {
-            return reloadAfterSwitch(period, clock$, relativePosAfterSwitch);
+            return reloadAfterSwitch(period, clock$, relativePosAfterSwitch, getCurrentTime);
           }
 
           const cleanBuffer$ = strategy.type === "clean-buffer" ?
@@ -251,6 +252,7 @@ export default function PeriodStream({
     }));
     return AdaptationStream({ abrManager,
                               clock$: adaptationStreamClock$,
+                              getCurrentTime: getCurrentTime,
                               content: { manifest, period, adaptation },
                               options,
                               segmentBuffer,

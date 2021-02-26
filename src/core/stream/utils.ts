@@ -67,11 +67,11 @@ import { INeedsMediaSourceReload } from "./types";
 export default function reloadAfterSwitch(
   period : Period,
   clock$ : Observable<{
-    getCurrentTime : () => number;
     position : number;
     isPaused : boolean;
   }>,
-  deltaPos : number
+  deltaPos : number,
+  getCurrentTime: () => number,
 ) : Observable<INeedsMediaSourceReload> {
   return clock$.pipe(
     take(1), // only the first (current) event interests us here
@@ -80,7 +80,7 @@ export default function reloadAfterSwitch(
           (period.end === undefined || period.end > initialTick.position))
       {
         // if the Period was playing at the time of the switch
-        const pos = initialTick.getCurrentTime() + deltaPos;
+        const pos = getCurrentTime() + deltaPos;
         const reloadAt = Math.min(Math.max(period.start, pos),
                                   period.end ?? Infinity);
         return observableOf(EVENTS.needsMediaSourceReload(period,
@@ -91,7 +91,7 @@ export default function reloadAfterSwitch(
       // If the Period was not playing, just ask to reload to the exact same position
       return clock$.pipe(
         map(tick => EVENTS.needsMediaSourceReload(period,
-                                                  tick.getCurrentTime(),
+                                                  getCurrentTime(),
                                                   !tick.isPaused)));
     }));
 }
