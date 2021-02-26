@@ -1,5 +1,11 @@
 # RxPlayer API ################################################################
 
+## Quick links ################################################################
+
+- [Player Events](./player_events.md)
+- [Player errors and warning](./errors.md)
+- [Encryption configuration](./loadVideo_options.md#subchapter-keySystems)
+
 
 ## Table of Contents ###########################################################
 
