@@ -382,7 +382,6 @@ function createClock(
       if (stalledState?.reason !== "internal-seek" && internalSeek) {
         internalSeek = false;
       }
-      log.debug("API: current media element state HELLO", internalSeek);
       const timings = objectAssign({},
                                    { stalled: stalledState },
                                    mediaTimings);
